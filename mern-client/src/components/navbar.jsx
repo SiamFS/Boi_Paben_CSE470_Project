@@ -53,7 +53,7 @@ function Navbar() {
                 <div className="flex justify-between items-center px-4 py-3">
                     {/* logo */}
                     <Link to='/' className="text-2xl font-bold text-orange-400 flex items-center gap-2">
-                        <FaBookOpen className='inline-block'/>Books
+                        <FaBookOpen className='inline-block'/>Boi Paben
                     </Link>
                     {/* nav bar items for large device */}
                     <ul className="hidden md:flex space-x-12 mx-auto">
