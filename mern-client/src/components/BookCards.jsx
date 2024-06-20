@@ -6,17 +6,16 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
-import './styles.css';
-
 // import required modules
 import { Pagination } from 'swiper/modules';
 import { Link } from 'react-router-dom';
+import { FaCartShopping } from 'react-icons/fa6';
 
 const bookcard = ({headline, books}) => {
       console.log(books)
   return (
     <div className = 'my-16 px-4 lg:px-24'>
-        <h2 className='text-5xl text-center font-bold text-gray-800'>{headline}</h2>
+        <h2 className='text-5xl text-center font-bold text-gray-800 pb-10'>{headline}</h2>
         <div>
         <Swiper
         slidesPerView={1}
@@ -43,21 +42,30 @@ const bookcard = ({headline, books}) => {
       >
         {
           books.map(book => <SwiperSlide key={book._id}>
-                 <Link to="/">
-                     <div>
-                        <img src={book.imageURL} alt={book.title} className='w-full h-64 object-cover' />
-                     </div>
-                     <div>
-                        <h3>{book.bookTile}</h3>
-                        
-                     </div>
-                 </Link>
-            </SwiperSlide>)
+                <Link to="/">
+                  <div className='relative'>
+                        <img src={book.imageURL} alt="" />
+                        <div className='absolute top-3 right-3 bg-orange-400
+                        hover:bg-blue-600 p-2 rounded'><FaCartShopping className='w-4 h-4 text-white'/>
+                        </div>
+                  </div>
+                  <div>
+                        <div>
+                            <h3>{book.bookTitle}</h3>
+                            <p>{book.authorName}</p>
+                        </div>
+                        <div>
+                          <p>{book.Price}Tk</p>
+                        </div>
+                  </div>
+                </Link>
+          </SwiperSlide>)
         }
+
       </Swiper>
         </div>
     </div>
-  
+    
   )
 }
 
