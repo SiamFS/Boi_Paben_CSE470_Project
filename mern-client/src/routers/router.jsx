@@ -36,7 +36,8 @@ import SingleBook from "../shop/singlebook";
           loader: ({params}) => fetch(`http://localhost:5000/book/${params.id}`)
         }
       ]
-    },
+    }
+
   ]);
 
   export default router;
