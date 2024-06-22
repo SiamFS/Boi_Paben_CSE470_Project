@@ -1,5 +1,5 @@
 ﻿# Boi_paben_project
-TO run this Project Open it in vs code 
+To run this Project Open it in vs code 
 Open terminal from VS code
 cd mern-server
 nmp start
