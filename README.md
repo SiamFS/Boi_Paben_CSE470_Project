@@ -10,5 +10,4 @@ Another terminal
 Another terminal
 "cd mern-client"
 "npm install"
-"npm install firebase"
 "npm run dev"
