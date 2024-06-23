@@ -2,15 +2,13 @@
 To run this Project Open it in vs code
 Open terminal from VS code
 cd mern-server
-<<<<<<< HEAD
 nmp start
 Another terminal
 cd mern-client
-=======
 npm install
 nmp start
 Another terminal
 cd mern-client
 npm install
-
+npm install firebase
 npm run dev
