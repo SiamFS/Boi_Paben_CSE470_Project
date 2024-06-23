@@ -2,7 +2,7 @@
 To run this Project Open it in vs code
 Open terminal from VS code
 "cd mern-server"
-"nmp start"
+"npm start"
 Another terminal
 "cd mern-client"
 "npm install"
