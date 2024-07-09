@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 // Middleware to connect frontend side
@@ -12,10 +13,7 @@ app.get('/', (req, res) => {
 });
 
 // MongoDB configuration
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); 
-const uri = "mongodb+srv://boi-paben:ky76U2dPmqMEIafT@cluster0.1sfia34.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; // This URI will connect to the MongoDB server
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const uri = "mongodb+srv://boi-paben:ky76U2dPmqMEIafT@cluster0.1sfia34.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -26,18 +24,89 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server (optional starting in v4.7)
     await client.connect();
-    const bookcollection = client.db("bookinventory").collection("books"); // Create a collection in the database
+    const bookCollection = client.db("bookinventory").collection("books");
+    const blogCollection = client.db("blog").collection("posts");
 
-    // Inserting book data to the db: POST method
+    // Blog routes
+    app.post('/posts/create', async (req, res) => {
+      try {
+        const newPost = req.body;
+        const result = await blogCollection.insertOne(newPost);
+        if (result.insertedId) {
+          const insertedPost = await blogCollection.findOne({ _id: result.insertedId });
+          res.status(201).send(insertedPost);
+        } else {
+          res.status(500).send({ error: 'Failed to create post' });
+        }
+      } catch (error) {
+        console.error('Error creating post:', error);
+        res.status(500).send({ error: 'Error creating post' });
+      }
+    });
+
+    app.get('/posts', async (req, res) => {
+      try {
+        const posts = await blogCollection.find({}).toArray();
+        res.status(200).send(posts);
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        res.status(500).send({ error: 'Error fetching posts' });
+      }
+    });
+
+    app.post('/posts/:id/comments', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const newComment = req.body;
+        const filter = { _id: new ObjectId(postId) };
+        const updateDoc = { $push: { comments: newComment } };
+        const result = await blogCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount === 1) {
+          const updatedPost = await blogCollection.findOne(filter);
+          res.status(201).send(updatedPost);
+        } else {
+          res.status(500).send({ error: 'Failed to add comment' });
+        }
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).send({ error: 'Error adding comment' });
+      }
+    });
+
+    app.post('/posts/:id/like', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const filter = { _id: new ObjectId(postId) };
+        const updateDoc = { $inc: { likes: 1 } };
+        await blogCollection.updateOne(filter, updateDoc);
+        res.status(200).send({ message: 'Post liked' });
+      } catch (error) {
+        console.error('Error liking post:', error);
+        res.status(500).send({ error: 'Error liking post' });
+      }
+    });
+
+    app.post('/posts/:id/dislike', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const filter = { _id: new ObjectId(postId) };
+        const updateDoc = { $inc: { dislikes: 1 } };
+        await blogCollection.updateOne(filter, updateDoc);
+        res.status(200).send({ message: 'Post disliked' });
+      } catch (error) {
+        console.error('Error disliking post:', error);
+        res.status(500).send({ error: 'Error disliking post' });
+      }
+    });
+
+    // Book routes (do not modify as per user request)
     app.post("/upload-book", async (req, res) => {
       const data = req.body;
-      const result = await bookcollection.insertOne(data);
+      const result = await bookCollection.insertOne(data);
       res.send(result);
     });
 
-    // Updating book in the database: PATCH method
     app.patch("/book/:id", async (req, res) => {
       const id = req.params.id;
       const updatedBookData = req.body;
@@ -48,34 +117,38 @@ async function run() {
           ...updatedBookData
         }
       };
-      const result = await bookcollection.updateOne(filter, updateDoc, options);
+      const result = await bookCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
 
-    // Deleting a book: DELETE method
     app.delete("/book/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
-      const result = await bookcollection.deleteOne(filter);
+      const result = await bookCollection.deleteOne(filter);
       res.send(result);
     });
 
-    // Find books by category
     app.get("/allbooks/", async (req, res) => {
       let query = {};
       if (req.query?.category) {
         query = { category: req.query.category };
       }
-      const result = await bookcollection.find(query).toArray();
+      const result = await bookCollection.find(query).toArray();
       res.send(result);
     });
 
-    // Get a single book data using URL parameter
+    app.get("/search/:title", async (req, res) => {
+      const title = req.params.title;
+      const query = { bookTitle: { $regex: title, $options: 'i' } };
+      const result = await bookCollection.find(query).toArray();
+      res.send(result);
+    });
+
     app.get("/book/:id", async (req, res) => {
       const id = req.params.id;
       try {
         const filter = { _id: new ObjectId(id) };
-        const result = await bookcollection.findOne(filter);
+        const result = await bookCollection.findOne(filter);
         if (!result) {
           res.status(404).send({ message: 'Book not found' });
           return;
@@ -86,16 +159,28 @@ async function run() {
       }
     });
 
-    // Send a ping to confirm a successful connection
+    app.get("/books/sort/price", async (req, res) => {
+      const { order } = req.query;
+      const sortOrder = order === 'desc' ? -1 : 1;
+      const result = await bookCollection.find().sort({ Price: sortOrder }).toArray();
+      res.send(result);
+    });
+
+    app.get("/books/category/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category };
+      const result = await bookCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close(); (so the connection will not close, commented this line)
+    // Add any cleanup code here if needed
   }
 }
 run().catch(console.dir);
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});

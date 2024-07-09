@@ -10,7 +10,7 @@ const FavoriteBooks = () => {
 
     return (
         <div>
-            <BookCards books={books} headline="Books For Sell" />
+            <BookCards books={books} headline="Latest Books" />
         </div>
     )
 }
