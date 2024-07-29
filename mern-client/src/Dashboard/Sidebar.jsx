@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sidebar as FlowbiteSidebar } from "flowbite-react";
 import { BiBuoy } from "react-icons/bi";
-import { HiArrowSmRight, HiChartPie, HiInbox, HiOutlineCloud, HiShoppingBag, HiSupport, HiTable, HiUser, HiViewBoards,HiHome } from "react-icons/hi";
+import { HiChartPie, HiInbox, HiOutlineCloud, HiShoppingBag, HiSupport, HiTable, HiUser, HiViewBoards,HiHome,HiArrowSmLeft } from "react-icons/hi";
 
 
 
@@ -26,7 +26,7 @@ export function Sidebar() {
           <FlowbiteSidebar.Item href="/login" icon={HiUser}>
             <p>Login</p>
           </FlowbiteSidebar.Item>
-          <FlowbiteSidebar.Item href="/logout" icon={HiArrowSmRight}>
+          <FlowbiteSidebar.Item href="/logout" icon={HiArrowSmLeft}>
           <p>Log Out</p>
           </FlowbiteSidebar.Item>
         </FlowbiteSidebar.ItemGroup>

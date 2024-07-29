@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaBars, FaBarsStaggered, FaBookOpen, FaXmark } from 'react-icons/fa6';
 import { AuthContext } from '../contexts/AuthProvider';
 
+
 function Navbar() {
     const [isMenuOpen, setMenuOpen] = useState(false);
     const [isSticky, setSticky] = useState(false);
@@ -40,6 +41,7 @@ function Navbar() {
         { link: 'Shop', path: '/shop' },
         { link: 'Sell your book', path: '/admin/dashboard' },
         { link: 'Blog', path: '/blog' },
+        { link: "Add to payment", path: "/add_to_payment"}
     ];
 
     return (

@@ -1,29 +1,47 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthProvider';
 
 const ManageBooks = () => {
   const [allBooks, setAllBooks] = useState([]);
+  const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    fetch('http://localhost:5000/allbooks')
-      .then(res => res.json())
-      .then(data => {
-        setAllBooks(data);
-      });
-  }, []);
+    if (!user) return;
 
-  // Delete book
-  const handleDelete = (id) => {
-    fetch(`http://localhost:5000/book/${id}`, {
-      method: 'DELETE',
-    })
-      .then(res => res.json())
-      .then(data => {
-        alert('Book Deleted Successfully');
-        setAllBooks(allBooks.filter(book => book._id !== id)); // Update the state to remove the deleted book
+    const fetchBooks = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/book/email/${user.email}`);
+        const data = await response.json();
+        setAllBooks(data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+
+    fetchBooks();
+  }, [user]);
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/book/${id}`, {
+        method: 'DELETE',
       });
+      const data = await response.json();
+      if (data.success) {
+        alert(data.message);
+        window.location.reload(); // Refresh the page
+      } else {
+        alert(data.message);
+      }
+    } catch (error) {
+      console.error('Error deleting book:', error);
+    }
   };
+
+  if (!user) {
+    return <p>Loading...</p>; // Show a loading message while the user is being authenticated
+  }
 
   return (
     <div className='container mx-auto px-4 my-12'>

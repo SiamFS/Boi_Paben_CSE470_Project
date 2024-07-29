@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from 'flowbite-react';
 
 const Shop = () => {
@@ -80,7 +81,15 @@ const Shop = () => {
                   Category: {book.category} <br />
                   {book.Price}TK
                 </p>
-                <button className='bg-orange-400 font-semibold text-white px-4 py-2 rounded-lg mt-4'>Buy Now</button>
+                <Link
+                  to={{
+                    pathname: '/add_to_payment',
+                    state: { book }
+                  }}
+                  className='bg-orange-400 font-semibold text-white px-4 py-2 rounded-lg mt-4'
+                >
+                  Buy Now
+                </Link>
               </Card>
             ))}
           </div>

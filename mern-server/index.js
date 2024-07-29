@@ -100,11 +100,33 @@ async function run() {
       }
     });
 
-    // Book routes (do not modify as per user request)
     app.post("/upload-book", async (req, res) => {
       const data = req.body;
-      const result = await bookCollection.insertOne(data);
-      res.send(result);
+      try {
+        const result = await bookCollection.insertOne(data);
+        res.status(200).json({
+          message: 'Book uploaded successfully',
+          result: result
+        });
+      } catch (error) {
+        res.status(500).json({
+          message: 'Failed to upload book',
+          error: error.message
+        });
+      }
+    });
+    
+   
+    //Find by email
+    app.get("/book/email/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      try {
+        const result = await bookCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ message: error.message });
+     }
     });
 
     app.patch("/book/:id", async (req, res) => {
@@ -122,11 +144,26 @@ async function run() {
     });
 
     app.delete("/book/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const result = await bookCollection.deleteOne(filter);
-      res.send(result);
-    });
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const result = await bookCollection.deleteOne(filter);
+  if (result.deletedCount === 1) {
+    res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
+  } else {
+    res.status(404).json({ success: false, message: "Book Delete Failed" });
+  }
+});
+app.delete("/book/:id", async (req, res) => {
+  const id = req.params.id;
+  const filter = { _id: new ObjectId(id) };
+  const result = await bookCollection.deleteOne(filter);
+  if (result.deletedCount === 1) {
+    res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
+  } else {
+    res.status(404).json({ success: false, message: 'Book Not Found' });
+  }
+});
+
 
     app.get("/allbooks/", async (req, res) => {
       let query = {};
@@ -136,6 +173,30 @@ async function run() {
       const result = await bookCollection.find(query).toArray();
       res.send(result);
     });
+    app.get('/wishlist', async (req, res) => {
+            let query = {}
+            if (req.query.email) {
+                query = {
+                    email: req.query.email
+                }
+            }
+            const result = await wishlistCollection.find(query).toArray()
+            res.send(result)
+        })
+
+        app.get('/wishlist/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const booking = await wishlistCollection.findOne(query)
+            res.send(booking)
+        })
+
+
+        app.post('/wishlist', async (req, res) => {
+            const user = req.body;
+            const result = await wishlistCollection.insertOne(user)
+            res.send(result)
+        })
 
     app.get("/search/:title", async (req, res) => {
       const title = req.params.title;

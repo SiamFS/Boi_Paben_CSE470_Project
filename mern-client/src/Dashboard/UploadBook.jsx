@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Button, TextInput, Textarea } from 'flowbite-react';
+import { AuthContext } from '../contexts/AuthProvider';
 
 const UploadBook = () => {
   const bookCategories = [
@@ -17,30 +18,46 @@ const UploadBook = () => {
     "Biography",
   ];
 
+  const { user } = useContext(AuthContext);
   const [selectedBookCategory, setSelectedBookCategory] = useState(bookCategories[10]);
+  const [imageFile, setImageFile] = useState(null);
 
   const handleChangeSelectedValue = (event) => {
     setSelectedBookCategory(event.target.value);
   };
 
-  const handleBookSubmit = (event) => {
+  const handleImageChange = (event) => {
+    setImageFile(event.target.files[0]);
+  };
+
+  const handleBookSubmit = async (event) => {
     event.preventDefault();
     const form = event.target;
 
     const bookTitle = form.bookTitle.value;
     const authorName = form.authorName.value;
-    const imageURL = form.imageURL.value;
-    const categoryName = form.categoryName.value;
+    const category = form.category.value;
     const Price = form.Price.value;
     const bookDescription = form.bookDescription.value;
+
+    // Upload image to imgbb
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    const imgbbResponse = await fetch('https://api.imgbb.com/1/upload?key=47bd3a08478085812d1960523ecd71ba', {
+      method: 'POST',
+      body: formData
+    }).then(res => res.json());
+
+    const imageURL = imgbbResponse.data.url;
 
     const bookObj = {
       bookTitle,
       authorName,
       imageURL,
-      categoryName,
+      category,
       Price,
       bookDescription,
+      email: user.email
     };
 
     console.log(bookObj);
@@ -85,18 +102,19 @@ const UploadBook = () => {
         </div>
         <div className='flex flex-col lg:flex-row gap-8'>
           <div className="lg:w-1/2">
-            <label htmlFor='imageURL'>Book Image URL</label>
-            <TextInput
+            <label htmlFor='imageURL'>Book Image</label>
+            <input
               id='imageURL'
               name='imageURL'
-              placeholder='Book Image URL'
               required
-              type='text'
+              type='file'
+              onChange={handleImageChange}
+              className='block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none'
             />
           </div>
           <div className="lg:w-1/2">
             <label htmlFor='inputState'>Book Category</label>
-            <select id='inputState' name='categoryName' className='w-full rounded' value={selectedBookCategory} onChange={handleChangeSelectedValue}>
+            <select id='inputState' name='category' className='w-full rounded' value={selectedBookCategory} onChange={handleChangeSelectedValue}>
               {bookCategories.map((category, index) => (
                 <option key={index} value={category}>{category}</option>
               ))}

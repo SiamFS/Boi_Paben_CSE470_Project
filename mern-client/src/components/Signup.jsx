@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthProvider';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-
 const Signup = () => {
-  const { createUser } = useContext(AuthContext);
+  const { createUser, signInWithGoogle } = useContext(AuthContext);
   const [error, setError] = useState("");
-  const location=useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
-  const from=location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/';
 
   const handleSignup = (event) => {
     event.preventDefault();
@@ -21,8 +20,21 @@ const Signup = () => {
       .then((userCredential) => {
         const user = userCredential.user;
         alert(`User ${user.email} has been created successfully`);
-        // You can add any post-signup logic here
-        navigate(from, {replace:true});
+        navigate(from, { replace: true });
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        setError(errorMessage);
+      });
+  };
+
+  const handleGoogleSignup = () => {
+    signInWithGoogle()
+      .then((result) => {
+        const user = result.user;
+        alert(`User ${user.email} has signed in with Google successfully`);
+        navigate(from, { replace: true });
       })
       .catch((error) => {
         const errorCode = error.code;
@@ -54,6 +66,11 @@ const Signup = () => {
                 </div>
                 {error && <p className="text-red-500">{error}</p>}
               </form>
+              <div className="relative mt-4">
+                <button onClick={handleGoogleSignup} className="bg-blue-500 text-white rounded-md px-2 py-1">
+                  Sign up with Google
+                </button>
+              </div>
             </div>
           </div>
         </div>
