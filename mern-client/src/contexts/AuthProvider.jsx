@@ -1,6 +1,16 @@
 import React, { createContext, useState, useEffect } from 'react';
 import app from '../firebase/firebase.config';
-import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider, sendPasswordResetEmail } from 'firebase/auth';
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  sendPasswordResetEmail, 
+  sendEmailVerification 
+} from 'firebase/auth';
 
 export const AuthContext = createContext();
 const auth = getAuth(app);
@@ -10,31 +20,73 @@ const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const createUser = (email, password) => {
+  const createUser = async (email, password) => {
     setLoading(true);
-    return createUserWithEmailAndPassword(auth, email, password);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await sendEmailVerification(userCredential.user);
+      setLoading(false);
+      return {
+        user: userCredential.user,
+        message: "Account created successfully. Please check your email for verification."
+      };
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
   };
 
-  const login = (email, password) => {
+  const login = async (email, password) => {
     setLoading(true);
-    return signInWithEmailAndPassword(auth, email, password);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
+        setLoading(false);
+        throw new Error("Please verify your email before logging in.");
+      }
+      setLoading(false);
+      return userCredential.user;
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
   };
 
-  const logout = () => {
-    return signOut(auth);
-  };
-
-  const signInWithGoogle = () => {
+  const logout = async () => {
     setLoading(true);
-    return signInWithPopup(auth, googleProvider);
+    try {
+      await signOut(auth);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
   };
 
-  const resetPassword = (email) => {
-    return sendPasswordResetEmail(auth, email);
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      setLoading(false);
+      return result.user;
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return "Password reset email sent. Please check your inbox.";
+    } catch (error) {
+      throw error;
+    }
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, currentUser => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });
@@ -43,8 +95,8 @@ const AuthProvider = ({ children }) => {
 
   const authInfo = {
     user,
-    createUser,
     loading,
+    createUser,
     login,
     logout,
     signInWithGoogle,

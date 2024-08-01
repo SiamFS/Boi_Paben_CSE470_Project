@@ -41,7 +41,6 @@ function Navbar() {
         { link: 'Shop', path: '/shop' },
         { link: 'Sell your book', path: '/admin/dashboard' },
         { link: 'Blog', path: '/blog' },
-        { link: "Add to payment", path: "/add_to_payment"}
     ];
 
     return (
@@ -58,13 +57,13 @@ function Navbar() {
                             </li>
                         ))}
                     </ul>
-                    <div className='space-x-12 hidden lg:flex items-center'>
-                        <button>
-                            <FaBars className='h-5 w-5 hover:text-orange-400' />
-                        </button>
-                        <button>
-                            {user ? user.email : ""}
-                        </button>
+                    <div className="hidden md:flex items-center gap-4">
+                        {user ? (
+                            <Link to='/profile' className='text-black uppercase font-bold'>Profile</Link>
+                        ) : (
+                            <Link to='/login' className='text-black uppercase font-bold'>Login</Link>
+                        )}
+                        <Link to='/add_to_payment' className='text-black uppercase font-bold'>Cart</Link>
                     </div>
                     <div className="lg:hidden md:hidden">
                         <button onClick={toggleMenu} className="text-black focus:outline-none">

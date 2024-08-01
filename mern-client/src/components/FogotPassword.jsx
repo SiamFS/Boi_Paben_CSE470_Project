@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthProvider';
 import { HiArrowSmLeft } from 'react-icons/hi';
+import { FaBookOpen } from 'react-icons/fa';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -28,6 +29,11 @@ const ForgotPassword = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-orange-400 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
         <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
           <div className="max-w-md mx-auto">
+          <div className="text-center">
+              <Link to='/' className="text-2xl font-bold text-orange-400 flex items-center gap-2">
+                        <FaBookOpen className='inline-block' /> Boi Paben
+              </Link>
+            </div>
             <div>
               <h1 className="text-2xl font-semibold">Forgot Password</h1>
             </div>

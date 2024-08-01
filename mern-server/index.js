@@ -1,16 +1,13 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware to connect frontend side
+
+// Middleware
 app.use(cors());
 app.use(express.json());
-
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
 
 // MongoDB configuration
 const uri = "mongodb+srv://boi-paben:ky76U2dPmqMEIafT@cluster0.1sfia34.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -22,11 +19,14 @@ const client = new MongoClient(uri, {
   }
 });
 
+// Main function to run the server
 async function run() {
   try {
     await client.connect();
     const bookCollection = client.db("bookinventory").collection("books");
     const blogCollection = client.db("blog").collection("posts");
+    const cartCollection = client.db("bookinventory").collection("cart");
+    const paymentCollection = client.db("bookinventory").collection("payments");
 
     // Blog routes
     app.post('/posts/create', async (req, res) => {
@@ -100,6 +100,7 @@ async function run() {
       }
     });
 
+    // Book routes
     app.post("/upload-book", async (req, res) => {
       const data = req.body;
       try {
@@ -115,9 +116,7 @@ async function run() {
         });
       }
     });
-    
-   
-    //Find by email
+
     app.get("/book/email/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email };
@@ -126,7 +125,7 @@ async function run() {
         res.send(result);
       } catch (error) {
         res.status(500).json({ message: error.message });
-     }
+      }
     });
 
     app.patch("/book/:id", async (req, res) => {
@@ -144,26 +143,15 @@ async function run() {
     });
 
     app.delete("/book/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
-  const result = await bookCollection.deleteOne(filter);
-  if (result.deletedCount === 1) {
-    res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
-  } else {
-    res.status(404).json({ success: false, message: "Book Delete Failed" });
-  }
-});
-app.delete("/book/:id", async (req, res) => {
-  const id = req.params.id;
-  const filter = { _id: new ObjectId(id) };
-  const result = await bookCollection.deleteOne(filter);
-  if (result.deletedCount === 1) {
-    res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
-  } else {
-    res.status(404).json({ success: false, message: 'Book Not Found' });
-  }
-});
-
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await bookCollection.deleteOne(filter);
+      if (result.deletedCount === 1) {
+        res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
+      } else {
+        res.status(404).json({ success: false, message: 'Delete Failed'});
+      }
+    });
 
     app.get("/allbooks/", async (req, res) => {
       let query = {};
@@ -173,30 +161,6 @@ app.delete("/book/:id", async (req, res) => {
       const result = await bookCollection.find(query).toArray();
       res.send(result);
     });
-    app.get('/wishlist', async (req, res) => {
-            let query = {}
-            if (req.query.email) {
-                query = {
-                    email: req.query.email
-                }
-            }
-            const result = await wishlistCollection.find(query).toArray()
-            res.send(result)
-        })
-
-        app.get('/wishlist/:id', async (req, res) => {
-            const id = req.params.id
-            const query = { _id: ObjectId(id) }
-            const booking = await wishlistCollection.findOne(query)
-            res.send(booking)
-        })
-
-
-        app.post('/wishlist', async (req, res) => {
-            const user = req.body;
-            const result = await wishlistCollection.insertOne(user)
-            res.send(result)
-        })
 
     app.get("/search/:title", async (req, res) => {
       const title = req.params.title;
@@ -234,14 +198,73 @@ app.delete("/book/:id", async (req, res) => {
       res.send(result);
     });
 
+    // Add to cart
+    app.post('/cart', async (req, res) => {
+      const cartItem = req.body;
+      
+      // Check if the email is already in the cart
+      try {
+        const existingItem = await cartCollection.findOne({ email: cartItem.email });
+        
+        if (existingItem) {
+          return res.status(400).send({ success: false, message: 'User already has items in the cart' });
+        }
+    
+        // Remove _id if present to avoid duplicate key error
+        delete cartItem._id;
+        
+        // Insert the new item into the cart
+        const result = await cartCollection.insertOne(cartItem);
+        
+        // Fetch the inserted item to send back in response
+        const insertedItem = await cartCollection.findOne({ _id: result.insertedId });
+        
+        res.status(201).send({ success: true, data: insertedItem });
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        res.status(500).send({ success: false, error: error.message });
+      }
+    });
+    
+    
+    // Get cart items by user email
+    app.get('/cart/:email', async (req, res) => {
+      const email = req.params.email;
+      try {
+        const result = await cartCollection.find({ user_email: email }).toArray();
+        res.send(result);
+      } catch (error) {
+        res.send({ success: false, error });
+      }
+    });
+    
+
+    // Remove item from cart
+    app.delete('/cart/:id', async (req, res) => {
+      const id = req.params.id;
+    
+      try {
+        const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 1) {
+          res.send({ success: true });
+        } else {
+          res.status(404).send({ success: false, message: 'Item not found' });
+        }
+      } catch (error) {
+        res.send({ success: false, error });
+      }
+    });
+
+    // Start the server
     app.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Add any cleanup code here if needed
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
   }
 }
+
 run().catch(console.dir);

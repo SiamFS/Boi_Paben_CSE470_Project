@@ -15,7 +15,7 @@ import Login from "../components/Login";
 import PrivateRoute from "../PrivateRoute/PrivateRoute";
 import Logout from "../components/logout";
 import SearchBox from "../components/SearchBox";
-import AddToPayment from "../shop/add_to_payment"; // Updated import
+import AddToPayment from "../shop/add_to_payment"; 
 import ForgotPassword from "../components/FogotPassword";
 
 const router = createBrowserRouter([
@@ -51,7 +51,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/add_to_payment",
-        element: <AddToPayment />, // Updated route
+        element: <AddToPayment />, 
       },
     ],
   },
