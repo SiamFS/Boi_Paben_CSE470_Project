@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaBars, FaBarsStaggered, FaBookOpen, FaXmark } from 'react-icons/fa6';
 import { AuthContext } from '../contexts/AuthProvider';
-
 
 function Navbar() {
     const [isMenuOpen, setMenuOpen] = useState(false);
     const [isSticky, setSticky] = useState(false);
     const { user } = useContext(AuthContext);
+    const [searchTerm, setSearchTerm] = useState('');
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setMenuOpen(!isMenuOpen);
@@ -35,6 +36,12 @@ function Navbar() {
         };
     }, []);
 
+    const handleSearch = () => {
+        if (searchTerm.trim()) {
+            navigate(`/search/${searchTerm}`);
+        }
+    };
+
     const navItems = [
         { link: 'Home', path: '/' },
         { link: 'About', path: '/about' },
@@ -44,8 +51,8 @@ function Navbar() {
     ];
 
     return (
-        <header>
-            <nav className={`fixed w-full z-50 ${isSticky ? 'bg-white shadow-md' : 'bg-transparent'} transition duration-300`}>
+        <header className={`fixed w-full z-50 ${isSticky ? 'bg-white shadow-md' : ''} transition duration-300`}>
+            <nav className="container mx-auto">
                 <div className="flex justify-between items-center px-4 py-3">
                     <Link to='/' className="text-2xl font-bold text-orange-400 flex items-center gap-2">
                         <FaBookOpen className='inline-block' /> Boi Paben
@@ -77,6 +84,25 @@ function Navbar() {
                     ))}
                 </div>
             </nav>
+            <div className="bg-transparent py-2">
+                <div className="container mx-auto">
+                    <div className="relative w-full max-w-xl mx-auto">
+                        <input
+                            type="text"
+                            placeholder="Search books"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        />
+                        <button
+                            onClick={handleSearch}
+                            className="absolute right-0 top-0 mt-2 mr-4 text-orange-400"
+                        >
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
         </header>
     );
 }

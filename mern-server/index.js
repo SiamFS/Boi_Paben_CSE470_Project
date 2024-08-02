@@ -148,7 +148,7 @@ async function run() {
       if (result.deletedCount === 1) {
         res.status(200).json({ success: true, message: 'Book Deleted Successfully' });
       } else {
-        res.status(404).json({ success: false, message: 'Delete Failed'});
+        res.status(404).json({ success: false, message: 'Delete Failed' });
       }
     });
 
@@ -209,17 +209,23 @@ async function run() {
     });
 
     app.post('/cart', async (req, res) => {
-      const { user_email, bookTitle } = req.body;
+      const { user_email, _id, ...rest } = req.body;
 
       try {
-        const existingItem = await cartCollection.findOne({ user_email, bookTitle });
+        const existingItem = await cartCollection.findOne({ user_email, original_id: _id });
 
         if (existingItem) {
-          return res.status(400).send({ success: false, message: 'Book already in cart' });
+          return res.status(400).send({ success: false, message: 'This book is already in your cart' });
         }
 
-        const result = await cartCollection.insertOne(req.body);
+        const cartItem = {
+          ...rest,
+          user_email,
+          original_id: _id,  // Store the original book ID
+          _id: new ObjectId() // Generate a new unique ID for the cart item
+        };
 
+        const result = await cartCollection.insertOne(cartItem);
         const insertedItem = await cartCollection.findOne({ _id: result.insertedId });
 
         res.status(201).send({ success: true, data: insertedItem });
@@ -241,28 +247,52 @@ async function run() {
 
     app.delete('/cart/:id', async (req, res) => {
       const id = req.params.id;
-
       try {
         const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
         if (result.deletedCount === 1) {
-          res.send({ success: true });
+          res.status(200).send({ success: true, message: 'Item removed from cart' });
         } else {
           res.status(404).send({ success: false, message: 'Item not found' });
         }
       } catch (error) {
-        res.send({ success: false, error });
+        res.status(500).send({ success: false, error: error.message });
+      }
+    });
+    
+    // Payment routes
+    app.post('/payments', async (req, res) => {
+      const paymentData = req.body;
+      try {
+        const result = await paymentCollection.insertOne(paymentData);
+        res.status(201).send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Error processing payment' });
       }
     });
 
-    // Start the server
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
+    app.get('/payments/:email', async (req, res) => {
+      const email = req.params.email;
+      try {
+        const result = await paymentCollection.find({ email }).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: 'Error fetching payments' });
+      }
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // Health check endpoint
+    app.get('/', (req, res) => {
+      res.send('Hello from the Book Inventory API!');
+    });
+
+    // Start server
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+
   } catch (error) {
-    console.error('Failed to connect to MongoDB:', error);
+    console.error('Error connecting to MongoDB:', error);
+    process.exit(1);
   }
 }
 

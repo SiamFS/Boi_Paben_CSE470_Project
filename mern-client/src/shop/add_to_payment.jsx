@@ -16,7 +16,8 @@ const AddToPayment = () => {
   const fetchCartItems = () => {
     fetch(`http://localhost:5000/cart/${user.email}`)
       .then((res) => res.json())
-      .then((data) => setCartItems(data));
+      .then((data) => setCartItems(data))
+      .catch((error) => console.error('Error fetching cart items:', error));
   };
 
   const handleRemoveItem = (id) => {
@@ -27,7 +28,14 @@ const AddToPayment = () => {
       .then((data) => {
         if (data.success) {
           setCartItems(cartItems.filter((item) => item._id !== id));
+        } else {
+          console.error('Failed to remove item:', data.message);
+          // Optionally, show an error message to the user
         }
+      })
+      .catch((error) => {
+        console.error('Error removing item:', error);
+        // Optionally, show an error message to the user
       });
   };
 

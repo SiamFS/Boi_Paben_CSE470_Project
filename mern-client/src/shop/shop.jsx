@@ -11,47 +11,45 @@ const Shop = () => {
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    fetchBooks();
-    if (user) {
-      fetchUserCart();
-    } else {
-      setUserCart([]);
-    }
+    const fetchData = async () => {
+      try {
+        // Fetch books
+        let url = 'http://localhost:5000/allbooks';
+        if (sortOrder && category) {
+          url = `http://localhost:5000/books/category/${category}?order=${sortOrder}`;
+        } else if (sortOrder) {
+          url = `http://localhost:5000/books/sort/price?order=${sortOrder}`;
+        } else if (category) {
+          url = `http://localhost:5000/books/category/${category}`;
+        }
+        const booksResponse = await fetch(url);
+        const booksData = await booksResponse.json();
+        
+        // Fetch user cart if logged in
+        let cartData = [];
+        if (user) {
+          const cartResponse = await fetch(`http://localhost:5000/cart/${user.email}`);
+          cartData = await cartResponse.json();
+        }
+
+        // Update books with cart status
+        setBooks(booksData.map(book => ({
+          ...book,
+          inCart: cartData.some(cartItem => cartItem._id === book._id),
+        })));
+        setUserCart(cartData);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, [sortOrder, category, user]);
-
-  const fetchBooks = () => {
-    let url = 'http://localhost:5000/allbooks';
-    if (sortOrder && category) {
-      url = `http://localhost:5000/books/category/${category}?order=${sortOrder}`;
-    } else if (sortOrder) {
-      url = `http://localhost:5000/books/sort/price?order=${sortOrder}`;
-    } else if (category) {
-      url = `http://localhost:5000/books/category/${category}`;
-    }
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        setBooks(data);
-      })
-      .catch((error) => {
-        console.error('Error fetching books:', error);
-      });
-  };
-
-  const fetchUserCart = () => {
-    fetch(`http://localhost:5000/cart/${user.email}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setUserCart(data);
-      })
-      .catch((error) => {
-        console.error('Error fetching user cart:', error);
-      });
-  };
 
   const addToCart = (book) => {
     if (user) {
-      if (userCart.some(item => item.bookTitle === book.bookTitle)) {
+      if (book.inCart) {
         alert('This book is already in your cart.');
         return;
       }
@@ -60,8 +58,6 @@ const Shop = () => {
         ...book,
         user_email: user.email,
       };
-
-      delete cartItem._id;
 
       fetch('http://localhost:5000/cart', {
         method: 'POST',
@@ -73,7 +69,11 @@ const Shop = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setUserCart([...userCart, cartItem]);
+            // Update local cart state and book status
+            setUserCart(prevCart => [...prevCart, cartItem]);
+            setBooks(prevBooks => prevBooks.map(b => 
+              b._id === book._id ? { ...b, inCart: true } : b
+            ));
           } else {
             alert(data.message || 'Failed to add book to cart');
           }
@@ -90,8 +90,10 @@ const Shop = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className='navbar fixed top-0 left-0 w-full z-50 bg-white shadow-md'>
+        {/* Your navbar content goes here */}
       </div>
       <div className='container mx-auto pt-28 px-4 lg:px-8'>
+        <h1 className='text-4xl font-bold mb-8 text-gray-800'>All Books</h1>
         <div className='flex flex-col md:flex-row justify-end items-center mb-8 space-y-4 md:space-y-0 md:space-x-4'>
           <div className='relative w-full md:w-auto'>
             <HiSortAscending className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />
@@ -159,7 +161,7 @@ const Shop = () => {
                   <h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle}</h3>
                   <p className='text-sm text-gray-600 mb-1'>Author: {book.authorName}</p>
                   <p className='text-sm text-gray-600 mb-2'>Category: {book.category}</p>
-                  <p className='text-lg font-bold text-blue-600 mb-4'>{book.Price} TK</p>
+                  <p className='text-lg font-bold mb-4'>Price: {book.Price} TK</p>
                   {book.email === user?.email ? (
                     <button
                       className='w-full bg-gray-300 text-gray-600 px-4 py-2 rounded-md cursor-not-allowed'
@@ -170,14 +172,12 @@ const Shop = () => {
                   ) : (
                     <button
                       onClick={() => addToCart(book)}
-                      className={`w-full ${userCart.some(item => item.bookTitle === book.bookTitle) ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-orange-500 text-white hover:bg-orange-600'} px-4 py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
-                      disabled={userCart.some(item => item.bookTitle === book.bookTitle)}
+                      className={`w-full ${book.inCart ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-orange-500 text-white hover:bg-orange-600'} px-4 py-2 rounded-md transition-colors duration-300 flex items-center justify-center`}
+                      disabled={book.inCart}
                     >
                       <HiShoppingCart className="mr-2" />
                       <span>
-                        {userCart.some(item => item.bookTitle === book.bookTitle)
-                          ? 'In Cart'
-                          : 'Add to Cart'}
+                        {book.inCart ? 'In Cart' : 'Add to Cart'}
                       </span>
                     </button>
                   )}
