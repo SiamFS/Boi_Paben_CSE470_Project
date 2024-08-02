@@ -73,7 +73,6 @@ const Shop = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            alert('Book added to cart successfully');
             setUserCart([...userCart, cartItem]);
           } else {
             alert(data.message || 'Failed to add book to cart');

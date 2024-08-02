@@ -70,6 +70,7 @@ const UploadBook = () => {
       body: JSON.stringify(bookObj)
     }).then(res => res.json()).then(data => {
       alert("Book Uploaded Successfully");
+      window.location.reload();
     });
   };
 

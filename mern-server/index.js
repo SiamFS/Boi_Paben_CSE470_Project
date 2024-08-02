@@ -4,7 +4,6 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -197,46 +196,39 @@ async function run() {
       const result = await bookCollection.find(query).toArray();
       res.send(result);
     });
-    // Get cart count by user email
-app.get('/cart/count/:email', async (req, res) => {
-  const email = req.params.email;
-  try {
-    const count = await cartCollection.countDocuments({ user_email: email });
-    res.json({ count });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-    // Add to cart
-    app.post('/cart', async (req, res) => {
-      const cartItem = req.body;
-      
-      // Check if the email is already in the cart
+
+    // Cart routes
+    app.get('/cart/count/:email', async (req, res) => {
+      const email = req.params.email;
       try {
-        const existingItem = await cartCollection.findOne({ email: cartItem.email });
-        
+        const count = await cartCollection.countDocuments({ user_email: email });
+        res.json({ count });
+      } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+
+    app.post('/cart', async (req, res) => {
+      const { user_email, bookTitle } = req.body;
+
+      try {
+        const existingItem = await cartCollection.findOne({ user_email, bookTitle });
+
         if (existingItem) {
-          return res.status(400).send({ success: false, message: 'User already has items in the cart' });
+          return res.status(400).send({ success: false, message: 'Book already in cart' });
         }
-    
-        // Remove _id if present to avoid duplicate key error
-        delete cartItem._id;
-        
-        // Insert the new item into the cart
-        const result = await cartCollection.insertOne(cartItem);
-        
-        // Fetch the inserted item to send back in response
+
+        const result = await cartCollection.insertOne(req.body);
+
         const insertedItem = await cartCollection.findOne({ _id: result.insertedId });
-        
+
         res.status(201).send({ success: true, data: insertedItem });
       } catch (error) {
         console.error('Error adding to cart:', error);
         res.status(500).send({ success: false, error: error.message });
       }
     });
-    
-    
-    // Get cart items by user email
+
     app.get('/cart/:email', async (req, res) => {
       const email = req.params.email;
       try {
@@ -246,12 +238,10 @@ app.get('/cart/count/:email', async (req, res) => {
         res.send({ success: false, error });
       }
     });
-    
 
-    // Remove item from cart
     app.delete('/cart/:id', async (req, res) => {
       const id = req.params.id;
-    
+
       try {
         const result = await cartCollection.deleteOne({ _id: new ObjectId(id) });
         if (result.deletedCount === 1) {
