@@ -90,10 +90,8 @@ const Shop = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className='navbar fixed top-0 left-0 w-full z-50 bg-white shadow-md'>
-        {/* Your navbar content goes here */}
       </div>
       <div className='container mx-auto pt-28 px-4 lg:px-8'>
-        <h1 className='text-4xl font-bold mb-8 text-gray-800'>All Books</h1>
         <div className='flex flex-col md:flex-row justify-end items-center mb-8 space-y-4 md:space-y-0 md:space-x-4'>
           <div className='relative w-full md:w-auto'>
             <HiSortAscending className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500' />

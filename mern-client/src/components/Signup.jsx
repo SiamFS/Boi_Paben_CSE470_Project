@@ -69,9 +69,14 @@ const Signup = () => {
                 {error && <p className="text-red-500">{error}</p>}
                 {success && <p className="text-green-500">{success}</p>}
               </form>
-              <div className="relative mt-4">
-                <button onClick={handleGoogleSignup} className="bg-blue-500 text-white rounded-md px-2 py-1">
-                  Sign up with Google
+              <div className="flex flex-col items-center mt-6">
+                <h1 className="font-bold text-black mb-4">Sign up with Google</h1>
+                <button onClick={handleGoogleSignup} className="text-white rounded-md">
+                  <img 
+                    src="/src/assets/google-logo.svg" 
+                    alt="Sign up with Google" 
+                    style={{ width: '40px', height: '40px' }}
+                  />
                 </button>
               </div>
             </div>
