@@ -197,7 +197,16 @@ async function run() {
       const result = await bookCollection.find(query).toArray();
       res.send(result);
     });
-
+    // Get cart count by user email
+app.get('/cart/count/:email', async (req, res) => {
+  const email = req.params.email;
+  try {
+    const count = await cartCollection.countDocuments({ user_email: email });
+    res.json({ count });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
     // Add to cart
     app.post('/cart', async (req, res) => {
       const cartItem = req.body;
