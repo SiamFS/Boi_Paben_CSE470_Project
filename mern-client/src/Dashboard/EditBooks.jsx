@@ -1,13 +1,10 @@
-import React from 'react'
-import { useLoaderData } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLoaderData, useParams } from 'react-router-dom';
 import { Button, TextInput, Textarea } from 'flowbite-react';
-
 
 const EditBooks = () => {
   const { id } = useParams();
-  const{bookTitle, authorName, category, Price, imageURL, bookDescription} = useLoaderData();
+  const { bookTitle, authorName, category, Price, imageURL, bookDescription } = useLoaderData();
   const bookCategories = [
     "Fiction",
     "Non-Fiction",
@@ -23,46 +20,60 @@ const EditBooks = () => {
     "Biography",
   ];
 
-  const [selectedBookCategory, setSelectedBookCategory] = useState(bookCategories[10]);
+  const [selectedBookCategory, setSelectedBookCategory] = useState(category);
+  const [imageFile, setImageFile] = useState(null);
 
   const handleChangeSelectedValue = (event) => {
     setSelectedBookCategory(event.target.value);
   };
 
-  const handleUpdate = (event) => {
+  const handleImageChange = (event) => {
+    setImageFile(event.target.files[0]);
+  };
+
+  const handleUpdate = async (event) => {
     event.preventDefault();
     const form = event.target;
 
     const bookTitle = form.bookTitle.value;
     const authorName = form.authorName.value;
-    const imageURL = form.imageURL.value;
     const categoryName = form.categoryName.value;
     const Price = form.Price.value;
     const bookDescription = form.bookDescription.value;
 
-    const updatebookObj = {
+    let updatedImageURL = imageURL;
+
+    if (imageFile) {
+      // Upload image to imgbb
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      const imgbbResponse = await fetch('https://api.imgbb.com/1/upload?key=47bd3a08478085812d1960523ecd71ba', {
+        method: 'POST',
+        body: formData
+      }).then(res => res.json());
+
+      updatedImageURL = imgbbResponse.data.url;
+    }
+
+    const updateBookObj = {
       bookTitle,
       authorName,
-      imageURL,
+      imageURL: updatedImageURL,
       categoryName,
       Price,
       bookDescription,
     };
 
-    //console.log(bookObj);
-    fetch(`http://localhost:5000/book/${id}`,{
+    fetch(`http://localhost:5000/book/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(updatebookObj)
-
+      body: JSON.stringify(updateBookObj)
     }).then(res => res.json()).then(data => {
       alert("Book Updated Successfully");
     });
-
   };
-    
 
   return (
     <div className='px-4 my-12'>
@@ -95,14 +106,13 @@ const EditBooks = () => {
         </div>
         <div className='flex flex-col lg:flex-row gap-8'>
           <div className="lg:w-1/2">
-            <label htmlFor='imageURL'>Book Image URL</label>
-            <TextInput
+            <label htmlFor='imageURL'>Book Image</label>
+            <input
               id='imageURL'
               name='imageURL'
-              placeholder='Book Image URL'
-              required
-              type='text'
-              defaultValue={imageURL}
+              type='file'
+              onChange={handleImageChange}
+              className='block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none'
             />
           </div>
           <div className="lg:w-1/2">
@@ -145,5 +155,4 @@ const EditBooks = () => {
   );
 }
 
-
-export default EditBooks
+export default EditBooks;

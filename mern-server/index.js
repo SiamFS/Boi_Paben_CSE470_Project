@@ -258,7 +258,22 @@ async function run() {
         res.status(500).send({ success: false, error: error.message });
       }
     });
-    
+      // Cart routes
+      app.post('/cart/count', async (req, res) => {
+        const { email } = req.body;
+  
+        if (!email) {
+          return res.status(400).json({ error: 'Email is required' });
+        }
+  
+        try {
+          const count = await cartCollection.countDocuments({ user_email: email });
+          res.json({ count });
+        } catch (error) {
+          console.error('Error fetching cart count:', error);
+          res.status(500).json({ error: 'Error fetching cart count' });
+        }
+      });
     // Payment routes
     app.post('/payments', async (req, res) => {
       const paymentData = req.body;

@@ -39,10 +39,6 @@ const ManageBooks = () => {
     }
   };
 
-  if (!user) {
-    return <p>Loading...</p>; // Show a loading message while the user is being authenticated
-  }
-
   return (
     <div className='container mx-auto px-4 my-12'>
       <h2 className="mb-8 text-3xl font-bold text-center">Manage Books</h2>

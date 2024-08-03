@@ -6,9 +6,6 @@ const SingleBook = () => {
 
   return (
     <div>
-      <div className='navbar fixed top-0 left-0 w-full z-50 bg-white shadow-md'>
-        {/* Your navbar content goes here */}
-      </div>
       <div className='pt-28 px-4 lg:px-24'>
         <div className='flex flex-col lg:flex-row items-center lg:items-start'>
           <img src={imageURL} alt={bookTitle} className='h-96 object-cover object-center rounded-lg shadow-md' />

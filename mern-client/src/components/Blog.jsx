@@ -92,6 +92,7 @@ function Blog() {
   };
 
   return (
+   <div className= "flex flex-grow mt-[180px] md:mt-[140px]"> 
     <div className="blog-container">
       <h1>Blog Posts</h1>
       <button className="plus-button" onClick={toggleSidebar}>+</button>
@@ -160,6 +161,7 @@ function Blog() {
           </form>
         </div>
       ))}
+    </div>
     </div>
   );
 }
