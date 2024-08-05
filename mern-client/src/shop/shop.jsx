@@ -88,7 +88,7 @@ const Shop = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-gray-100 min-h-screen flex flex-grow mt-[60px] md:mt-[30px]">
       <div className='container mx-auto pt-28 px-4 lg:px-8'>
         <div className='flex flex-col md:flex-row justify-end items-center mb-8 space-y-4 md:space-y-0 md:space-x-4'>
           <div className='relative w-full md:w-auto'>

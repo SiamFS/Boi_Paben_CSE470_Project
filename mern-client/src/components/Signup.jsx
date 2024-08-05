@@ -16,9 +16,11 @@ const Signup = () => {
     const form = event.target;
     const email = form.email.value;
     const password = form.password.value;
+    const firstName = form.firstName.value;
+    const lastName = form.lastName.value;
 
     try {
-      const result = await createUser(email, password);
+      const result = await createUser(email, password, firstName, lastName);
       setSuccess(result.message);
       setTimeout(() => {
         setSuccess("");
@@ -56,6 +58,12 @@ const Signup = () => {
             </div>
             <div className="divide-y divide-gray-200">
               <form onSubmit={handleSignup} className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+                <div className="relative">
+                  <input id="firstName" name="firstName" type="text" className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-rose-600" placeholder="First Name" required />
+                </div>
+                <div className="relative">
+                  <input id="lastName" name="lastName" type="text" className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-rose-600" placeholder="Last Name" required />
+                </div>
                 <div className="relative">
                   <input id="email" name="email" type="text" className="peer h-10 w-full border-b-2 border-gray-300 text-gray-900 focus:outline-none focus:border-rose-600" placeholder="Email address" required />
                 </div>

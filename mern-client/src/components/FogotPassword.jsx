@@ -59,7 +59,7 @@ const ForgotPassword = () => {
               <div className="mt-4">
                 <Link to="/login" className="flex items-center text-orange-400 hover:underline">
                   <HiArrowSmLeft className="h-5 w-5 mr-2" />
-                  Back to Login
+                  Back to LogIn
                 </Link>
               </div>
             </div>

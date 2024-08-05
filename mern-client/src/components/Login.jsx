@@ -21,7 +21,6 @@ const Login = () => {
 
     try {
       await login(email, password);
-      setSuccess("Login successful!");
       setTimeout(() => {
         setSuccess("");
         navigate(from, { replace: true });
@@ -35,7 +34,6 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
-      setSuccess("Login successful!");
       setTimeout(() => {
         setSuccess("");
         navigate(from, { replace: true });

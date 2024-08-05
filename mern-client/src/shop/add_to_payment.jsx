@@ -46,7 +46,7 @@ const AddToPayment = () => {
       <div className='flex flex-col lg:flex-row'>
         <div className='lg:w-3/4 p-4'>
           {cartItems.length === 0 ? (
-            <div className='text-center text-3xl font-bold text-red-600'>
+            <div className="pl-20 pt-10 text-3xl text-center font-bold text-black">
               No items in the cart.
             </div>
           ) : (
@@ -81,7 +81,7 @@ const AddToPayment = () => {
           <p className='text-xl mb-2'>Subtotal: {totalPrice.toFixed(2)} TK</p>
           <p className='text-xl mb-2'>Estimated Shipping: 50.00 TK</p>
           <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} TK</p>
-          <Link to='/checkout' className='bg-green-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-green-600 transition-colors mt-4'>
+          <Link to='/checkout' className='bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-orange-600 transition-colors mt-4'>
             Checkout
           </Link>
         </div>

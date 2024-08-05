@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaBars, FaBookOpen, FaTimes, FaShoppingCart, FaUser, FaSignOutAlt } from 'react-icons/fa';
+import { FaBars, FaBookOpen, FaTimes, FaShoppingCart, FaSignOutAlt, FaCamera } from 'react-icons/fa';
 import { AuthContext } from '../contexts/AuthProvider';
 
 function Navbar() {
     const [isMenuOpen, setMenuOpen] = useState(false);
     const [isSticky, setSticky] = useState(false);
     const [isProfileOpen, setProfileOpen] = useState(false);
-    const { user, logout } = useContext(AuthContext);
+    const { user, logout, updateUserProfile } = useContext(AuthContext);
     const [searchTerm, setSearchTerm] = useState('');
     const [cartCount, setCartCount] = useState(0);
     const navigate = useNavigate();
     const profileRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const toggleMenu = () => {
         setMenuOpen(!isMenuOpen);
@@ -64,7 +65,7 @@ function Navbar() {
 
         fetchCartCount();
 
-        const intervalId = setInterval(fetchCartCount, 5000);
+        const intervalId = setInterval(fetchCartCount, 1000); // Poll every 1 second
         return () => clearInterval(intervalId);
     }, [user]);
 
@@ -80,12 +81,33 @@ function Navbar() {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await logout();
-            navigate('/');
-        } catch (error) {
-            console.error('Logout failed', error);
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
+
+    const handleProfilePictureClick = () => {
+        fileInputRef.current.click();
+    };
+
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch(`https://api.imgbb.com/1/upload?key=47bd3a08478085812d1960523ecd71ba`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await updateUserProfile({ photoURL: data.data.url });
+                }
+            } catch (error) {
+                console.error('Error uploading image:', error);
+            }
         }
     };
 
@@ -117,11 +139,30 @@ function Navbar() {
                         {user ? (
                             <div className="relative" ref={profileRef}>
                                 <button onClick={toggleProfile} className="text-black focus:outline-none">
-                                    <FaUser className="h-6 w-6" />
+                                    <img 
+                                        src={user.photoURL || "https://ibb.co/J5JqNKx"} 
+                                        alt="Profile" 
+                                        className="h-10 w-10 rounded-full object-cover"
+                                    />
                                 </button>
                                 {isProfileOpen && (
                                     <div className="absolute right-1/2 transform translate-x-1/2 mt-2 w-64 bg-blue-200 rounded-lg shadow-xl py-2 px-4" style={{minWidth: '200px'}}>
+                                        <p className="text-center text-sm text-gray-600 mb-2">{`${user.firstName} ${user.lastName}`}</p>
                                         <p className="text-center text-sm text-gray-600 mb-2">{user.email}</p>
+                                        <button 
+                                            onClick={handleProfilePictureClick}
+                                            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 mb-2"
+                                        >
+                                            <FaCamera className="mr-2" />
+                                            {user.photoURL === "https://i.ibb.co/yWjpDXh/image.png" ? "Upload Profile Picture" : "Update Profile Picture"}
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleFileChange} 
+                                            accept="image/*" 
+                                            className="hidden" 
+                                        />
                                         <button 
                                             onClick={handleLogout} 
                                             className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-white bg-orange-500 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
