@@ -7,6 +7,7 @@
     "client": "cd mern-client && npm run dev"
   },
   "devDependencies": {
-    "concurrently": "^7.0.0"
+    "concurrently": "^7.0.0",
+    "opener": "^1.5.2"
   }
 }
