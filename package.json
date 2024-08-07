@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "flowbite-react": "^0.10.0"
+  "name": "mern-project",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd mern-server && npm start",
+    "client": "cd mern-client && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^7.0.0"
   }
 }
