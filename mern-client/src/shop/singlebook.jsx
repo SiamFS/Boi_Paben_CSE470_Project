@@ -95,7 +95,7 @@ const SingleBook = () => {
             <div className="md:flex md:items-start">
               <div className="md:flex-shrink-0 md:w-1/3">
                 <img className="w-full object-cover" src={imageURL} alt={bookTitle} />
-                <div className="pt-8">
+                <div className="pt-4 pl-28">
               <button
                 onClick={handleReportClick}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
