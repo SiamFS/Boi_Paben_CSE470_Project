@@ -23,7 +23,7 @@ async function run() {
   try {
     await client.connect();
     const bookCollection = client.db("bookinventory").collection("books");
-    const blogCollection = client.db("blog").collection("posts");
+    const blogCollection = client.db("bookinventory").collection("blogs");
     const cartCollection = client.db("bookinventory").collection("cart");
     const paymentCollection = client.db("bookinventory").collection("payments");
     const reportCollection = client.db("bookinventory").collection("reports");
@@ -99,7 +99,87 @@ async function run() {
         res.status(500).send({ error: 'Error disliking post' });
       }
     });
-
+    app.put('/posts/:id', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const updatedPost = req.body;
+        const filter = { _id: new ObjectId(postId) };
+        const updateDoc = { $set: updatedPost };
+        const result = await blogCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount === 1) {
+          const updated = await blogCollection.findOne(filter);
+          res.status(200).send(updated);
+        } else {
+          res.status(404).send({ error: 'Post not found or not updated' });
+        }
+      } catch (error) {
+        console.error('Error updating post:', error);
+        res.status(500).send({ error: 'Error updating post' });
+      }
+    });
+    app.delete('/posts/:id', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const filter = { _id: new ObjectId(postId) };
+        const result = await blogCollection.deleteOne(filter);
+        if (result.deletedCount === 1) {
+          res.status(200).send({ message: 'Post deleted successfully' });
+        } else {
+          res.status(404).send({ error: 'Post not found' });
+        }
+      } catch (error) {
+        console.error('Error deleting post:', error);
+        res.status(500).send({ error: 'Error deleting post' });
+      }
+    });
+       // Updated route for editing a comment
+       app.put('/posts/:postId/comments/:commentId', async (req, res) => {
+        try {
+          const { postId, commentId } = req.params;
+          const { content } = req.body;
+          const filter = { _id: new ObjectId(postId) };
+          const update = {
+            $set: {
+              "comments.$[elem].content": content,
+              "comments.$[elem].edited": true
+            }
+          };
+          const options = {
+            arrayFilters: [{ "elem._id": new ObjectId(commentId) }]
+          };
+          const result = await blogCollection.updateOne(filter, update, options);
+          if (result.modifiedCount === 1) {
+            const updatedPost = await blogCollection.findOne(filter);
+            res.status(200).send(updatedPost);
+          } else {
+            res.status(404).send({ error: 'Comment not found or not updated' });
+          }
+        } catch (error) {
+          console.error('Error updating comment:', error);
+          res.status(500).send({ error: 'Error updating comment' });
+        }
+      });
+  
+      // Updated route for deleting a comment
+      app.delete('/posts/:postId/comments/:commentId', async (req, res) => {
+        try {
+          const { postId, commentId } = req.params;
+          const filter = { _id: new ObjectId(postId) };
+          const update = {
+            $pull: { comments: { _id: new ObjectId(commentId) } }
+          };
+          const result = await blogCollection.updateOne(filter, update);
+          if (result.modifiedCount === 1) {
+            const updatedPost = await blogCollection.findOne(filter);
+            res.status(200).send(updatedPost);
+          } else {
+            res.status(404).send({ error: 'Comment not found or not deleted' });
+          }
+        } catch (error) {
+          console.error('Error deleting comment:', error);
+          res.status(500).send({ error: 'Error deleting comment' });
+        }
+      });
     // Book routes
     app.post("/upload-book", async (req, res) => {
       const data = req.body;
