@@ -95,8 +95,8 @@ const BookCard = ({ headline, books }) => {
               >
                 <img src={book.imageURL} alt="" className="w-full h-auto" />
                 {book.email === user?.email ? (
-                  <div className='relative'>
-                    <div className='absolute top-3 right-3 bg-blue-300 p-2 rounded z-10'>
+                  <div>
+                    <div className='absolute top-3 right-3 bg-blue-300 p-2 rounded z-10 '>
                       <FaBook className='w-4 h-4 text-white'/>
                     </div>
                     <div className={`absolute top-3 right-12 bg-blue-300 text-black text-sm rounded-md px-2 py-1 z-20 transform transition-all duration-300 ${hoveredBook === book._id ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full'}`}>
