@@ -26,6 +26,7 @@ async function run() {
     const blogCollection = client.db("blog").collection("posts");
     const cartCollection = client.db("bookinventory").collection("cart");
     const paymentCollection = client.db("bookinventory").collection("payments");
+    const reportCollection = client.db("bookinventory").collection("reports");
 
     // Blog routes
     app.post('/posts/create', async (req, res) => {
@@ -294,6 +295,35 @@ async function run() {
         res.status(500).send({ error: 'Error fetching payments' });
       }
     });
+    // Add this to your existing Express server file
+
+app.post('/report', async (req, res) => {
+  const reportData = req.body;
+  
+  try {
+    // Check if this user has already reported this book
+    const existingReport = await reportCollection.findOne({
+      bookId: reportData.bookId,
+      reporterEmail: reportData.reporterEmail
+    });
+
+    if (existingReport) {
+      return res.status(400).json({ success: false, message: 'Already reported' });
+    }
+
+    // If not, insert the new report
+    const result = await reportCollection.insertOne(reportData);
+    
+    if (result.insertedId) {
+      res.status(201).json({ success: true, message: 'Report submitted successfully' });
+    } else {
+      res.status(500).json({ success: false, message: 'Failed to submit report' });
+    }
+  } catch (error) {
+    console.error('Error submitting report:', error);
+    res.status(500).json({ success: false, message: 'An error occurred while submitting the report' });
+  }
+});
 
     // Health check endpoint
     app.get('/', (req, res) => {

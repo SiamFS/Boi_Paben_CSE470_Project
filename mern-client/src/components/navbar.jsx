@@ -7,7 +7,7 @@ function Navbar() {
     const [isMenuOpen, setMenuOpen] = useState(false);
     const [isSticky, setSticky] = useState(false);
     const [isProfileOpen, setProfileOpen] = useState(false);
-    const { user, logout, updateUserProfile } = useContext(AuthContext);
+    const { user, updateUserProfile } = useContext(AuthContext);
     const [searchTerm, setSearchTerm] = useState('');
     const [cartCount, setCartCount] = useState(0);
     const navigate = useNavigate();
@@ -82,8 +82,7 @@ function Navbar() {
     };
 
     const handleLogout = () => {
-        logout();
-        navigate('/');
+        navigate('/logout');
     };
 
     const handleProfilePictureClick = () => {
@@ -120,9 +119,9 @@ function Navbar() {
     ];
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 ${isSticky ? 'bg-white shadow-md' : 'bg-white md:bg-transparent'}`}>
+        <header className={`fixed top-0 left-0 right-0 z-50 ${isSticky ? 'bg-white shadow-md' : 'bg-transparent'}`}>
             <div className="container mx-auto px-4">
-                <nav className="flex items-center justify-between py-4">
+                <nav className="flex items-center justify-between pt-1">
                     <Link to='/' className="text-2xl font-bold text-orange-400 flex items-center gap-2">
                         <FaBookOpen className='inline-block' /> Boi Paben
                     </Link>
@@ -215,7 +214,7 @@ function Navbar() {
                 )}
             </div>
             
-            <div className="bg-transparent py-4 px-4">
+            <div className="bg-transparent pb-1 ml-16">
                 <div className="container mx-auto">
                     <div className="relative max-w-xl mx-auto">
                         <input
