@@ -280,9 +280,9 @@ const Blog = () => {
           type="file"
           accept="image/*"
           onChange={(e) => setNewPost({ ...newPost, image: e.target.files[0] })}
-          className="mb-4"
+          className="text-sm text-gray-900 border border-gray-400 rounded-lg cursor-pointer bg-gray-50 focus:outline-none mr-2"
         />
-        <button type="submit" className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-600 transition duration-300">
+        <button type="submit" className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 transition duration-300">
           Post
         </button>
       </form>
