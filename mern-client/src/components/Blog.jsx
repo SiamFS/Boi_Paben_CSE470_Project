@@ -209,6 +209,7 @@ const Blog = () => {
       }
     }
   };
+
   const handleLike = async (postId) => {
     try {
       const response = await fetch(`http://localhost:5000/posts/${postId}/like`, { method: "POST" });
@@ -239,7 +240,39 @@ const Blog = () => {
     }
   };
 
-  // Pagination
+  const handleCommentSubmit = async (postId) => {
+    if (!user) {
+      setError("Please log in to comment.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/posts/${postId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          author: user.firstName + " " + user.lastName,
+          authorPhoto: user.photoURL,
+          content: newComment,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to add comment");
+      }
+      const updatedPost = await response.json();
+      setPosts(posts.map((post) =>
+        post._id === postId ? updatedPost : post
+      ));
+      setNewComment("");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      setError("Failed to add comment. Please try again.");
+    }
+  };
+
+  // Pagination logic
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
@@ -254,38 +287,43 @@ const Blog = () => {
     return <div className="text-center mt-8 text-red-500">{error}</div>;
   }
 
+
   return (
     <div className="max-w-4xl mx-auto p-4 flex-grow mt-[120px] md:mt-[100px]">
       <h1 className="text-3xl font-bold text-center text-orange-400 ">Book Community Blogs</h1>
       
       {/* New Post Form */}
-      <form onSubmit={handlePostSubmit} className="mb-8 bg-white shadow-md rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Create a New Post</h2>
-        <input
-          type="text"
-          placeholder="Title"
-          value={newPost.title}
-          onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-          className="w-full p-2 mb-4 border rounded"
-          required
-        />
-        <textarea
-          placeholder="What's on your mind about books?"
-          value={newPost.content}
-          onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-          className="w-full p-2 mb-4 border rounded h-24"
-          required
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setNewPost({ ...newPost, image: e.target.files[0] })}
-          className="text-sm text-gray-900 border border-gray-400 rounded-lg cursor-pointer bg-gray-50 focus:outline-none mr-2"
-        />
-        <button type="submit" className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 transition duration-300">
-          Post
-        </button>
-      </form>
+      {user ? (
+        <form onSubmit={handlePostSubmit} className="mb-8 bg-white shadow-md rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Create a New Post</h2>
+          <input
+            type="text"
+            placeholder="Title"
+            value={newPost.title}
+            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+            className="w-full p-2 mb-4 border rounded"
+            required
+          />
+          <textarea
+            placeholder="What's on your mind about books?"
+            value={newPost.content}
+            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+            className="w-full p-2 mb-4 border rounded h-24"
+            required
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setNewPost({ ...newPost, image: e.target.files[0] })}
+            className="text-sm text-gray-900 border border-gray-400 rounded-lg cursor-pointer bg-gray-50 focus:outline-none mr-2"
+          />
+          <button type="submit" className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 transition duration-300">
+            Post
+          </button>
+        </form>
+      ) : (
+        <p className="text-center mb-8">Please log in to create a post.</p>
+      )}
 
       {/* Posts List */}
       {currentPosts.map((post) => (
@@ -319,56 +357,60 @@ const Blog = () => {
 
           {/* Comments */}
           <div className="mt-4">
-    <h3 className="font-semibold mb-2">Comments</h3>
-    {post.comments && post.comments.map((comment, index) => (
-      <div key={index} className="bg-gray-100 p-3 rounded mb-2">
-        <div className="flex items-center mb-2">
-          <img src={comment.authorPhoto || "/api/placeholder/30/30"} alt={comment.author} className="w-6 h-6 rounded-full mr-2" />
-          <p className="font-semibold">{comment.author}</p>
-          {comment.edited && <span className="text-xs text-gray-500 ml-2">(edited)</span>}
-        </div>
-        {editingComment === comment._id ? (
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            handleEditComment(post._id, comment._id, e.target.content.value);
-          }}>
-            <input
-              name="content"
-              defaultValue={comment.content}
-              className="w-full p-2 border rounded mb-2"
-            />
-            <button type="submit" className="bg-blue-500 text-white px-2 py-1 rounded mr-2">Save</button>
-            <button type="button" onClick={() => setEditingComment(null)} className="bg-gray-500 text-white px-2 py-1 rounded">Cancel</button>
-          </form>
-        ) : (
-          <p>{comment.content}</p>
-        )}
-        {user && user.firstName + " " + user.lastName === comment.author && editingComment !== comment._id && (
-          <div className="mt-2">
-            <button onClick={() => setEditingComment(comment._id)} className="text-blue-500 mr-2">Edit</button>
-            <button onClick={() => handleDeleteComment(post._id, comment._id)} className="text-red-500">Delete</button>
+            <h3 className="font-semibold mb-2">Comments</h3>
+            {post.comments && post.comments.map((comment) => (
+              <div key={comment._id} className="bg-gray-100 p-3 rounded mb-2">
+                <div className="flex items-center mb-2">
+                  <img src={comment.authorPhoto || "/api/placeholder/30/30"} alt={comment.author} className="w-6 h-6 rounded-full mr-2" />
+                  <p className="font-semibold">{comment.author}</p>
+                  {comment.edited && <span className="text-xs text-gray-500 ml-2">(edited)</span>}
+                </div>
+                {editingComment === comment._id ? (
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    handleEditComment(post._id, comment._id, e.target.content.value);
+                  }}>
+                    <input
+                      name="content"
+                      defaultValue={comment.content}
+                      className="w-full p-2 border rounded mb-2"
+                    />
+                    <button type="submit" className="bg-blue-500 text-white px-2 py-1 rounded mr-2">Save</button>
+                    <button type="button" onClick={() => setEditingComment(null)} className="bg-gray-500 text-white px-2 py-1 rounded">Cancel</button>
+                  </form>
+                ) : (
+                  <p>{comment.content}</p>
+                )}
+                {user && user.firstName + " " + user.lastName === comment.author && editingComment !== comment._id && (
+                  <div className="mt-2">
+                    <button onClick={() => setEditingComment(comment._id)} className="text-blue-500 mr-2">Edit</button>
+                    <button onClick={() => handleDeleteComment(post._id, comment._id)} className="text-red-500">Delete</button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
-      </div>
-    ))}
-  </div>
 
           {/* New Comment Form */}
-          <div className="mt-4 flex">
-            <input
-              type="text"
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="flex-grow p-2 border rounded-l"
-            />
-            <button 
-              onClick={() => handleCommentSubmit(post._id)} 
-              className="bg-orange-500 text-white px-4 py-2 rounded-r hover:bg-orange-600 transition duration-300"
-            >
-              <Icon name="send" />
-            </button>
-          </div>
+          {user ? (
+            <div className="mt-4 flex">
+              <input
+                type="text"
+                placeholder="Add a comment..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="flex-grow p-2 border rounded-l"
+              />
+              <button 
+                onClick={() => handleCommentSubmit(post._id)} 
+                className="bg-orange-500 text-white px-4 py-2 rounded-r hover:bg-orange-600 transition duration-300"
+              >
+                <Icon name="send" />
+              </button>
+            </div>
+          ) : (
+            <p className="mt-4 text-center">Please log in to comment.</p>
+          )}
         </div>
       ))}
 

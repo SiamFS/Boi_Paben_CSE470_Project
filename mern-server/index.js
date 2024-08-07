@@ -28,7 +28,7 @@ async function run() {
     const paymentCollection = client.db("bookinventory").collection("payments");
     const reportCollection = client.db("bookinventory").collection("reports");
 
-    // Blog routes
+    // Create a new post
     app.post('/posts/create', async (req, res) => {
       try {
         const newPost = req.body;
@@ -45,6 +45,7 @@ async function run() {
       }
     });
 
+    // Get all posts
     app.get('/posts', async (req, res) => {
       try {
         const posts = await blogCollection.find({}).toArray();
@@ -55,78 +56,78 @@ async function run() {
       }
     });
 
-    // Update the comment creation route
-app.post('/posts/:id/comments', async (req, res) => {
-  try {
-    const postId = req.params.id;
-    const newComment = {
-      _id: new ObjectId(),  // Add a unique ID for each comment
-      ...req.body,
-      createdAt: new Date()
-    };
-    const filter = { _id: new ObjectId(postId) };
-    const updateDoc = { $push: { comments: newComment } };
-    const result = await blogCollection.updateOne(filter, updateDoc);
-    if (result.modifiedCount === 1) {
-      const updatedPost = await blogCollection.findOne(filter);
-      res.status(201).send(updatedPost);
-    } else {
-      res.status(500).send({ error: 'Failed to add comment' });
-    }
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    res.status(500).send({ error: 'Error adding comment' });
-  }
-});
-
-// Update the comment editing route
-app.put('/posts/:postId/comments/:commentId', async (req, res) => {
-  try {
-    const { postId, commentId } = req.params;
-    const { content } = req.body;
-    const filter = { _id: new ObjectId(postId) };
-    const update = {
-      $set: {
-        "comments.$[elem].content": content,
-        "comments.$[elem].edited": true
+    // Add a comment to a post
+    app.post('/posts/:id/comments', async (req, res) => {
+      try {
+        const postId = req.params.id;
+        const newComment = {
+          _id: new ObjectId(),
+          ...req.body,
+          createdAt: new Date()
+        };
+        const filter = { _id: new ObjectId(postId) };
+        const updateDoc = { $push: { comments: newComment } };
+        const result = await blogCollection.updateOne(filter, updateDoc);
+        if (result.modifiedCount === 1) {
+          const updatedPost = await blogCollection.findOne(filter);
+          res.status(201).send(updatedPost);
+        } else {
+          res.status(500).send({ error: 'Failed to add comment' });
+        }
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).send({ error: 'Error adding comment' });
       }
-    };
-    const options = {
-      arrayFilters: [{ "elem._id": new ObjectId(commentId) }]
-    };
-    const result = await blogCollection.updateOne(filter, update, options);
-    if (result.modifiedCount === 1) {
-      const updatedPost = await blogCollection.findOne(filter);
-      res.status(200).send(updatedPost);
-    } else {
-      res.status(404).send({ error: 'Comment not found or not updated' });
-    }
-  } catch (error) {
-    console.error('Error updating comment:', error);
-    res.status(500).send({ error: 'Error updating comment' });
-  }
-});
+    });
 
-// Update the comment deletion route
-app.delete('/posts/:postId/comments/:commentId', async (req, res) => {
-  try {
-    const { postId, commentId } = req.params;
-    const filter = { _id: new ObjectId(postId) };
-    const update = {
-      $pull: { comments: { _id: new ObjectId(commentId) } }
-    };
-    const result = await blogCollection.updateOne(filter, update);
-    if (result.modifiedCount === 1) {
-      const updatedPost = await blogCollection.findOne(filter);
-      res.status(200).send(updatedPost);
-    } else {
-      res.status(404).send({ error: 'Comment not found or not deleted' });
-    }
-  } catch (error) {
-    console.error('Error deleting comment:', error);
-    res.status(500).send({ error: 'Error deleting comment' });
-  }
-});
+    // Update a comment
+    app.put('/posts/:postId/comments/:commentId', async (req, res) => {
+      try {
+        const { postId, commentId } = req.params;
+        const { content } = req.body;
+        const filter = { _id: new ObjectId(postId) };
+        const update = {
+          $set: {
+            "comments.$[elem].content": content,
+            "comments.$[elem].edited": true
+          }
+        };
+        const options = {
+          arrayFilters: [{ "elem._id": new ObjectId(commentId) }]
+        };
+        const result = await blogCollection.updateOne(filter, update, options);
+        if (result.modifiedCount === 1) {
+          const updatedPost = await blogCollection.findOne(filter);
+          res.status(200).send(updatedPost);
+        } else {
+          res.status(404).send({ error: 'Comment not found or not updated' });
+        }
+      } catch (error) {
+        console.error('Error updating comment:', error);
+        res.status(500).send({ error: 'Error updating comment' });
+      }
+    });
+
+    // Delete a comment
+    app.delete('/posts/:postId/comments/:commentId', async (req, res) => {
+      try {
+        const { postId, commentId } = req.params;
+        const filter = { _id: new ObjectId(postId) };
+        const update = {
+          $pull: { comments: { _id: new ObjectId(commentId) } }
+        };
+        const result = await blogCollection.updateOne(filter, update);
+        if (result.modifiedCount === 1) {
+          const updatedPost = await blogCollection.findOne(filter);
+          res.status(200).send(updatedPost);
+        } else {
+          res.status(404).send({ error: 'Comment not found or not deleted' });
+        }
+      } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).send({ error: 'Error deleting comment' });
+      }
+    });
 
     app.post('/posts/:id/like', async (req, res) => {
       try {
