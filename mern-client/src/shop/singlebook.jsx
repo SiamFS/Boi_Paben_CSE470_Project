@@ -7,9 +7,11 @@ const SingleBook = () => {
   const {
     _id,
     bookTitle,
+    authorName,
     imageURL,
     Price,
     bookDescription,
+    category,
     authenticity,
     productCondition,
     publisher,
@@ -86,13 +88,21 @@ const SingleBook = () => {
   };
 
   return (
-    <div className="flex min-h-screen pt-[80px] md:pt-[40px] bg-gray-100 flex-grow mt-[180px] md:mt-[140px]">
+    <div className="flex min-h-screen pt-[80px] md:pt-[40px] bg-gray-100 flex-grow mt-[100px] md:mt-[80px]">
       <div className="flex-grow">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow-xl rounded-lg overflow-hidden">
             <div className="md:flex md:items-start">
               <div className="md:flex-shrink-0 md:w-1/3">
                 <img className="w-full object-cover" src={imageURL} alt={bookTitle} />
+                <div className="pt-8">
+              <button
+                onClick={handleReportClick}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Report this Book
+              </button>
+            </div>
               </div>
               <div className="p-8 md:w-2/3">
                 <div className="uppercase tracking-wide text-sm text-indigo-500 font-semibold">
@@ -101,9 +111,10 @@ const SingleBook = () => {
                 <h2 className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                   {bookTitle}
                 </h2>
-                <p className="mt-4 text-xl text-gray-500">{Price} Tk</p>
+                <p className="mt-2 text-lg text-gray-500">Author: {authorName}</p>
+                <p className="mt-2 text-lg text-gray-500">Category: {category}</p>
+                <p className="mt-4 text-xl text-gray-900">Price: {Price} Tk</p>
                 <p className="mt-2 text-gray-500">Seller: {seller}</p>
-                <p className="mt-4 text-lg text-gray-700">{bookDescription}</p>
                 <div className="mt-6 border-t border-gray-200 pt-6">
                   <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                     {authenticity && (
@@ -132,15 +143,10 @@ const SingleBook = () => {
                     )}
                   </dl>
                 </div>
+                <div className="mt-6 text-gray-500"><p>Book Description</p>
+                  <p className="mt-2 text-lg text-gray-900">{bookDescription}</p>
+                </div>  
               </div>
-            </div>
-            <div className="px-4 py-5 sm:px-6">
-              <button
-                onClick={handleReportClick}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Report this Book
-              </button>
             </div>
           </div>
         </div>
