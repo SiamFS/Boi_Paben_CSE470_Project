@@ -131,15 +131,15 @@ const Shop = () => {
             No books found in the selected category.
           </div>
         ) : (
-          <div className='grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+          <div className='grid sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6'>
             {books.map((book) => (
               <div key={book._id} className='bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105'>
-                <div className='relative aspect-w-3 aspect-h-4 overflow-hidden'>
+                <div className='relative aspect-auto aspect-h-4 overflow-hidden'>
                   {book.imageURL ? (
                     <img 
                       src={book.imageURL} 
                       alt={book.bookTitle} 
-                      className='w-full h-full object-cover'
+                      className='w-80 h-80 object-cover'
                     />
                   ) : (
                     <div className='w-full h-full bg-gray-300 flex items-center justify-center'>
