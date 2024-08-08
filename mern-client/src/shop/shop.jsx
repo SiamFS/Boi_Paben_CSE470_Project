@@ -131,7 +131,7 @@ const Shop = () => {
             No books found in the selected category.
           </div>
         ) : (
-          <div className='grid sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+          <div className='grid sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6'>
             {books.map((book) => (
               <div key={book._id} className='bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105'>
                 <div className='relative aspect-auto aspect-h-4 overflow-hidden'>
@@ -139,7 +139,7 @@ const Shop = () => {
                     <img 
                       src={book.imageURL} 
                       alt={book.bookTitle} 
-                      className='w-80 h-80 object-cover'
+                      className='w-auto h-auto object-cover'
                     />
                   ) : (
                     <div className='w-full h-full bg-gray-300 flex items-center justify-center'>
@@ -154,7 +154,7 @@ const Shop = () => {
                   </div>
                 </div>
                 <div className='p-4'>
-                  <h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle}</h3>
+                  <h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle.length > 40 ? book.bookTitle.substring(0, 40) + '...' : book.bookTitle}</h3>
                   <p className='text-sm text-gray-600 mb-1'>Author: {book.authorName}</p>
                   <p className='text-sm text-gray-600 mb-2'>Category: {book.category}</p>
                   <p className='text-lg font-bold mb-4'>Price: {book.Price} TK</p>

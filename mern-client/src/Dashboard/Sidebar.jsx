@@ -1,6 +1,5 @@
 import React from 'react';
 import { Sidebar as FlowbiteSidebar } from "flowbite-react";
-import { BiBuoy } from "react-icons/bi";
 import { HiChartPie, HiInbox, HiOutlineCloud, HiShoppingBag, HiSupport, HiTable, HiViewBoards} from "react-icons/hi";
 
 

@@ -339,6 +339,7 @@ const Blog = () => {
             <img src={post.imageUrl} alt="Post" className="w-70 h-80 mb-4 rounded ml-auto mr-auto" />
           )}
           <p className="mb-4">{post.content}</p>
+          {user ? (
           <div className="flex items-center mb-4">
             <button onClick={() => handleLike(post._id)} className="flex items-center mr-4 text-blue-500 hover:text-blue-600 transition duration-300">
               <Icon name="thumbsUp" /> <span className="ml-1">{post.likes}</span>
@@ -347,6 +348,9 @@ const Blog = () => {
               <Icon name="thumbsDown" /> <span className="ml-1">{post.dislikes}</span>
             </button>
           </div>
+          ) : (
+            <p></p>
+          )}
 
           {user && user.firstName + " " + user.lastName === post.author && (
             <div className="mb-4">

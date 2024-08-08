@@ -123,7 +123,7 @@ const BookCard = ({ headline, books }) => {
                 )}
               </div>
               <div>
-                <h3 className='text-xl font-semibold text-gray-800 mb-2'>Name: {book.bookTitle}</h3>
+                <h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle.length > 50 ? book.bookTitle.substring(0, 50) + '...' : book.bookTitle}</h3>
                 <p className='text-sm text-gray-600 mb-1'>Author: {book.authorName}</p>
                 <p className='text-sm text-gray-600 mb-2'>Category: {book.category}</p>
                 <p className='text-lg font-bold mb-4'>Price: {book.Price} TK</p>
