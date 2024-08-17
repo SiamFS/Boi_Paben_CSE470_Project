@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthProvider';
 import { HiTrash } from 'react-icons/hi';
 import { loadStripe } from '@stripe/stripe-js';
@@ -53,7 +53,7 @@ const AddToPayment = () => {
       },
       body: JSON.stringify({
         items: cartItems,
-        email: user.email, // Add user email to the request body if needed
+        email: user.email,
       }),
     });
 
@@ -71,6 +71,7 @@ const AddToPayment = () => {
       console.error('Failed to create checkout session:', session.message);
     }
   };
+
 
   return (
     <div className='pt-28 px-4 lg:px-24'>
@@ -92,7 +93,7 @@ const AddToPayment = () => {
                       <p className='text-sm font-medium text-gray-700'>
                         Author: {item.authorName} <br />
                         Category: {item.category} <br />
-                        Price: {item.Price} TK
+                        Price: {item.Price} BDT
                       </p>
                     </div>
                     <button
@@ -109,15 +110,16 @@ const AddToPayment = () => {
         </div>
         <div className='lg:w-1/4 p-4 border rounded shadow-lg lg:ml-4'>
           <h2 className='text-3xl lg:text-5xl font-bold mb-4'>Order Summary</h2>
-          <p className='text-xl mb-2'>Subtotal: {totalPrice.toFixed(2)} TK</p>
-          <p className='text-xl mb-2'>Estimated Shipping: 50.00 TK</p>
-          <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} TK</p>
+          <p className='text-xl mb-2'>Subtotal: {totalPrice.toFixed(2)} BDT</p>
+          <p className='text-xl mb-2'>Shipping: 50.00 BDT</p>
+          <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} BDT</p>
           <button
             onClick={handlePayment}
             className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors'
           >
             Proceed to Payment
           </button>
+          <p className='mt-2 text-sm text-gray-600'>Shipping available within Bangladesh only</p>
         </div>
       </div>
     </div>

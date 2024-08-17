@@ -37,12 +37,12 @@ async function run() {
           payment_method_types: ['card'],
           line_items: items.map(item => ({
             price_data: {
-              currency: 'usd',
+              currency: 'bdt',
               product_data: {
                 name: item.bookTitle,
                 images: [item.imageURL],
               },
-              unit_amount: item.Price * 100,
+              unit_amount: Math.round(item.Price * 100),
             },
             quantity: 1,
           })),
@@ -56,13 +56,78 @@ async function run() {
             }))),
             customerEmail: email,
           },
+          shipping_address_collection: {
+            allowed_countries: ['BD'],
+          },
+          shipping_options: [
+            {
+              shipping_rate_data: {
+                type: 'fixed_amount',
+                fixed_amount: {
+                  amount: 5000,
+                  currency: 'bdt',
+                },
+                display_name: 'Standard shipping within Bangladesh',
+                delivery_estimate: {
+                  minimum: {
+                    unit: 'business_day',
+                    value: 3,
+                  },
+                  maximum: {
+                    unit: 'business_day',
+                    value: 7,
+                  },
+                },
+              },
+            },
+          ],
         });
     
         res.json({ id: session.id });
       } catch (error) {
+        console.error('Error creating checkout session:', error);
         res.status(500).json({ error: error.message });
       }
     });
+
+    app.post('/payment-success', async (req, res) => {
+      const { session_id } = req.query;
+      
+      if (!session_id) {
+        return res.status(400).json({ success: false, error: 'No session ID provided' });
+      }
+
+      try {
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+        const { cartItems, customerEmail } = session.metadata;
+        const parsedCartItems = JSON.parse(cartItems);
+
+        // Update book availability and remove from cart
+        for (const item of parsedCartItems) {
+          await bookCollection.updateOne(
+            { _id: new ObjectId(item.bookId) },
+            { $set: { availability: 'sold' } }
+          );
+          await cartCollection.deleteOne({ original_id: item.bookId, user_email: customerEmail });
+        }
+
+        // Save payment information
+        const paymentInfo = {
+          email: customerEmail,
+          amount: session.amount_total / 100,
+          items: parsedCartItems,
+          address: session.shipping_details.address,
+          paymentDate: new Date(),
+          stripeSessionId: session_id
+        };
+        await paymentCollection.insertOne(paymentInfo);
+
+        res.status(200).json({ success: true, message: 'Payment processed successfully' });
+      } catch (error) {
+        console.error('Error processing payment:', error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    })
     // Create a new post
     app.post('/posts/create', async (req, res) => {
       try {
