@@ -17,6 +17,7 @@ import Logout from "../components/logout";
 import SearchBox from "../components/SearchBox";
 import AddToPayment from "../shop/add_to_payment"; 
 import ForgotPassword from "../components/FogotPassword";
+import PaymentSuccess from "../components/PaymentSucess";
 
 const router = createBrowserRouter([
   {
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
       {
         path: "/add_to_payment",
         element: <AddToPayment />, 
+      },
+      {
+        path: "/payment-success",
+        element: <PaymentSuccess />,
       },
     ],
   },

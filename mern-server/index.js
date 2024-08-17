@@ -17,7 +17,8 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
+const stripe = require('stripe')('sk_test_51PiZwnGRR4keZPjY1AvOeX0MO8nurmyOYSuhf77UlCSGc0hxgBEHKeP1f57QaZamaMwDGjJhaMnoW2zGYDGdwV1l00TwOuTvnv');
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 // Main function to run the server
 async function run() {
   try {
@@ -28,6 +29,40 @@ async function run() {
     const paymentCollection = client.db("bookinventory").collection("payments");
     const reportCollection = client.db("bookinventory").collection("reports");
 
+    app.post('/create-checkout-session', async (req, res) => {
+      const { items, email } = req.body;
+    
+      try {
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: items.map(item => ({
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: item.bookTitle,
+                images: [item.imageURL],
+              },
+              unit_amount: item.Price * 100,
+            },
+            quantity: 1,
+          })),
+          mode: 'payment',
+          success_url: `${BASE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${BASE_URL}/add_to_payment`,
+          metadata: {
+            cartItems: JSON.stringify(items.map(item => ({
+              bookId: item._id,
+              bookTitle: item.bookTitle,
+            }))),
+            customerEmail: email,
+          },
+        });
+    
+        res.json({ id: session.id });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
     // Create a new post
     app.post('/posts/create', async (req, res) => {
       try {

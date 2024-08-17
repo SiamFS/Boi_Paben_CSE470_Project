@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthProvider';
 import { HiTrash } from 'react-icons/hi';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe('pk_test_51PiZwnGRR4keZPjYev4QMRdtJjbwUM1oNCJW2ZzJ75kE7lg49NHPsoYn6rxibQ4ERYKROtZp5bRJULLrC20P8UZ500NWNb7Fj3');
 
 const AddToPayment = () => {
   const [cartItems, setCartItems] = useState([]);
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -30,16 +34,43 @@ const AddToPayment = () => {
           setCartItems(cartItems.filter((item) => item._id !== id));
         } else {
           console.error('Failed to remove item:', data.message);
-          // Optionally, show an error message to the user
         }
       })
       .catch((error) => {
         console.error('Error removing item:', error);
-        // Optionally, show an error message to the user
       });
   };
 
   const totalPrice = cartItems.reduce((acc, item) => acc + parseFloat(item.Price), 0);
+
+  const handlePayment = async () => {
+    const stripe = await stripePromise;
+
+    const response = await fetch('http://localhost:5000/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: cartItems,
+        email: user.email, // Add user email to the request body if needed
+      }),
+    });
+
+    const session = await response.json();
+
+    if (response.ok) {
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      });
+
+      if (result.error) {
+        console.error(result.error.message);
+      }
+    } else {
+      console.error('Failed to create checkout session:', session.message);
+    }
+  };
 
   return (
     <div className='pt-28 px-4 lg:px-24'>
@@ -76,14 +107,17 @@ const AddToPayment = () => {
             </div>
           )}
         </div>
-        <div className='lg:w-1/4 p-4  border rounded shadow-lg lg:ml-4'>
+        <div className='lg:w-1/4 p-4 border rounded shadow-lg lg:ml-4'>
           <h2 className='text-3xl lg:text-5xl font-bold mb-4'>Order Summary</h2>
           <p className='text-xl mb-2'>Subtotal: {totalPrice.toFixed(2)} TK</p>
           <p className='text-xl mb-2'>Estimated Shipping: 50.00 TK</p>
           <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} TK</p>
-          <Link to='/checkout' className='bg-orange-500 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-orange-600 transition-colors mt-4'>
-            Checkout
-          </Link>
+          <button
+            onClick={handlePayment}
+            className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors'
+          >
+            Proceed to Payment
+          </button>
         </div>
       </div>
     </div>
