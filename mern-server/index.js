@@ -17,6 +17,7 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
+
 const stripe = require('stripe')('sk_test_51PiZwnGRR4keZPjY1AvOeX0MO8nurmyOYSuhf77UlCSGc0hxgBEHKeP1f57QaZamaMwDGjJhaMnoW2zGYDGdwV1l00TwOuTvnv');
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 // Main function to run the server
@@ -127,7 +128,7 @@ async function run() {
         console.error('Error processing payment:', error);
         res.status(500).json({ success: false, error: error.message });
       }
-    })
+    });
     // Create a new post
     app.post('/posts/create', async (req, res) => {
       try {

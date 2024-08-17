@@ -72,7 +72,6 @@ const AddToPayment = () => {
     }
   };
 
-
   return (
     <div className='pt-28 px-4 lg:px-24'>
       <div className='flex flex-col lg:flex-row'>
