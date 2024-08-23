@@ -30,6 +30,42 @@ async function run() {
     const paymentCollection = client.db("bookinventory").collection("payments");
     const reportCollection = client.db("bookinventory").collection("reports");
 
+    
+    // Add this new endpoint for cash on delivery
+    app.post('/cash-on-delivery', async (req, res) => {
+      const { items, email, address, totalAmount } = req.body;
+    
+      try {
+        // Save payment information
+        const paymentInfo = {
+          email: email,
+          amount: totalAmount,
+          items: items.map(item => ({
+            bookId: item._id,
+            bookTitle: item.bookTitle,
+          })),
+          address: address,
+          paymentDate: new Date(),
+          paymentMethod: 'cash on delivery',
+        };
+        const result = await paymentCollection.insertOne(paymentInfo);
+    
+        // Update book availability and remove from cart
+        for (const item of items) {
+          await bookCollection.updateOne(
+            { _id: new ObjectId(item._id) },
+            { $set: { availability: 'sold' } }
+          );
+          await cartCollection.deleteOne({ original_id: item._id, user_email: email });
+        }
+    
+        res.status(200).json({ success: true, message: 'Order placed successfully' });
+      } catch (error) {
+        console.error('Error processing cash on delivery:', error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
     app.post('/create-checkout-session', async (req, res) => {
       const { items, email } = req.body;
     
@@ -83,7 +119,7 @@ async function run() {
             },
           ],
         });
-    
+
         res.json({ id: session.id });
       } catch (error) {
         console.error('Error creating checkout session:', error);
@@ -91,44 +127,48 @@ async function run() {
       }
     });
 
-    app.post('/payment-success', async (req, res) => {
-      const { session_id } = req.query;
+    // New endpoint to handle successful payments
+    app.post('/handle-successful-payment', async (req, res) => {
+      const { session_id } = req.body;
       
-      if (!session_id) {
-        return res.status(400).json({ success: false, error: 'No session ID provided' });
-      }
-
       try {
         const session = await stripe.checkout.sessions.retrieve(session_id);
-        const { cartItems, customerEmail } = session.metadata;
-        const parsedCartItems = JSON.parse(cartItems);
+        
+        if (session.payment_status === 'paid') {
+          const { cartItems, customerEmail } = session.metadata;
+          const parsedCartItems = JSON.parse(cartItems);
 
-        // Update book availability and remove from cart
-        for (const item of parsedCartItems) {
-          await bookCollection.updateOne(
-            { _id: new ObjectId(item.bookId) },
-            { $set: { availability: 'sold' } }
-          );
-          await cartCollection.deleteOne({ original_id: item.bookId, user_email: customerEmail });
+          // Save payment information
+          const paymentInfo = {
+            email: customerEmail,
+            amount: session.amount_total / 100,
+            items: parsedCartItems,
+            address: session.shipping?.address || {},
+            paymentDate: new Date(),
+            paymentMethod: 'card',
+            stripeSessionId: session.id
+          };
+          await paymentCollection.insertOne(paymentInfo);
+
+          // Update book availability and remove from cart
+          for (const item of parsedCartItems) {
+            await bookCollection.updateOne(
+              { _id: new ObjectId(item.bookId) },
+              { $set: { availability: 'sold' } }
+            );
+            await cartCollection.deleteOne({ original_id: item.bookId, user_email: customerEmail });
+          }
+
+          res.status(200).json({ success: true, message: 'Payment processed and cart updated successfully' });
+        } else {
+          res.status(400).json({ success: false, message: 'Payment not completed' });
         }
-
-        // Save payment information
-        const paymentInfo = {
-          email: customerEmail,
-          amount: session.amount_total / 100,
-          items: parsedCartItems,
-          address: session.shipping_details.address,
-          paymentDate: new Date(),
-          stripeSessionId: session_id
-        };
-        await paymentCollection.insertOne(paymentInfo);
-
-        res.status(200).json({ success: true, message: 'Payment processed successfully' });
       } catch (error) {
-        console.error('Error processing payment:', error);
+        console.error('Error handling successful payment:', error);
         res.status(500).json({ success: false, error: error.message });
       }
     });
+
     // Create a new post
     app.post('/posts/create', async (req, res) => {
       try {

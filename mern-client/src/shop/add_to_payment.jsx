@@ -8,6 +8,17 @@ const stripePromise = loadStripe('pk_test_51PiZwnGRR4keZPjYev4QMRdtJjbwUM1oNCJW2
 
 const AddToPayment = () => {
   const [cartItems, setCartItems] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [address, setAddress] = useState({
+    streetAddress: '',
+    cityTown: '',
+    district: '',
+    zipCode: '',
+    contactNumber: ''
+  });
+  const [addressError, setAddressError] = useState('');
+  const [orderConfirmed, setOrderConfirmed] = useState(false);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -43,7 +54,16 @@ const AddToPayment = () => {
 
   const totalPrice = cartItems.reduce((acc, item) => acc + parseFloat(item.Price), 0);
 
-  const handlePayment = async () => {
+  const handleCheckout = () => {
+    setIsModalOpen(true);
+  };
+
+  const handlePaymentMethodSelect = (method) => {
+    setPaymentMethod(method);
+    setAddressError('');
+  };
+
+  const handleStripePayment = async () => {
     const stripe = await stripePromise;
 
     const response = await fetch('http://localhost:5000/create-checkout-session', {
@@ -54,6 +74,7 @@ const AddToPayment = () => {
       body: JSON.stringify({
         items: cartItems,
         email: user.email,
+        payment: "card"
       }),
     });
 
@@ -66,10 +87,68 @@ const AddToPayment = () => {
 
       if (result.error) {
         console.error(result.error.message);
+      } else {
+        // Remove items from cart after successful payment
+        await fetch('http://localhost:5000/remove-from-cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.email,
+            items: cartItems
+          }),
+        });
       }
     } else {
       console.error('Failed to create checkout session:', session.message);
     }
+  };
+
+  const handleCashOnDelivery = async () => {
+    // Validate address fields
+    if (!address.streetAddress || !address.cityTown || !address.district || !address.zipCode || !address.contactNumber) {
+      setAddressError('All address fields are required');
+      return;
+    }
+    setAddressError('');
+
+    const response = await fetch('http://localhost:5000/cash-on-delivery', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items: cartItems,
+        email: user.email,
+        address: address,
+        totalAmount: totalPrice + 50,
+        payment: "cod"
+      }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      setOrderConfirmed(true);
+      // Remove items from cart
+      cartItems.forEach(item => handleRemoveItem(item._id));
+      setTimeout(() => {
+        setOrderConfirmed(false);
+        setIsModalOpen(false);
+        navigate('/payment-success');
+      }, 3000);
+    } else {
+      console.error('Failed to process cash on delivery:', result.message);
+      setAddressError(result.message);
+    }
+  };
+
+  const handleAddressChange = (e) => {
+    setAddress({
+      ...address,
+      [e.target.name]: e.target.value
+    });
   };
 
   return (
@@ -113,14 +192,102 @@ const AddToPayment = () => {
           <p className='text-xl mb-2'>Shipping: 50.00 BDT</p>
           <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} BDT</p>
           <button
-            onClick={handlePayment}
+            onClick={handleCheckout}
             className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors'
           >
-            Proceed to Payment
+            Proceed to Checkout
           </button>
           <p className='mt-2 text-sm text-gray-600'>Shipping available within Bangladesh only</p>
         </div>
       </div>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-4">Select Payment Method</h2>
+            <div className="flex justify-around mb-4">
+              <button
+                onClick={() => handlePaymentMethodSelect('card')}
+                className={`px-4 py-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                Pay with Card
+              </button>
+              <button
+                onClick={() => handlePaymentMethodSelect('cash')}
+                className={`px-4 py-2 rounded-lg ${paymentMethod === 'cash' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              >
+                Cash on Delivery
+              </button>
+            </div>
+            {paymentMethod === 'cash' && (
+              <div className="mt-4">
+                <input
+                  type="text"
+                  name="streetAddress"
+                  placeholder="Street Address"
+                  value={address.streetAddress}
+                  onChange={handleAddressChange}
+                  className="border p-2 rounded-lg w-full mb-2"
+                />
+                <input
+                  type="text"
+                  name="cityTown"
+                  placeholder="City/Town"
+                  value={address.cityTown}
+                  onChange={handleAddressChange}
+                  className="border p-2 rounded-lg w-full mb-2"
+                />
+                <input
+                  type="text"
+                  name="district"
+                  placeholder="District"
+                  value={address.district}
+                  onChange={handleAddressChange}
+                  className="border p-2 rounded-lg w-full mb-2"
+                />
+                <input
+                  type="text"
+                  name="zipCode"
+                  placeholder="Zip Code"
+                  value={address.zipCode}
+                  onChange={handleAddressChange}
+                  className="border p-2 rounded-lg w-full mb-2"
+                />
+                <input
+                  type="text"
+                  name="contactNumber"
+                  placeholder="Contact Number"
+                  value={address.contactNumber}
+                  onChange={handleAddressChange}
+                  className="border p-2 rounded-lg w-full mb-2"
+                />
+                {addressError && <p className="text-red-500 mb-2">{addressError}</p>}
+                <button
+                  onClick={handleCashOnDelivery}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 w-full"
+                >
+                  Confirm Order
+                </button>
+              </div>
+            )}
+            {paymentMethod === 'card' && (
+              <button
+                onClick={handleStripePayment}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 w-full"
+              >
+                Proceed to Payment
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {orderConfirmed && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg">
+            <h2 className="text-2xl font-bold mb-4">Order Confirmed!</h2>
+            <p>Your order has been placed successfully.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
