@@ -32,12 +32,14 @@ const Shop = () => {
           cartData = await cartResponse.json();
         }
 
-        // Update books with cart status
-        setBooks(booksData.map(book => ({
+        // Filter out sold books and update books with cart status
+        const availableBooks = booksData.filter(book => book.availability !== "sold");
+        setBooks(availableBooks.map(book => ({
           ...book,
           inCart: cartData.some(cartItem => cartItem._id === book._id),
         })));
         setUserCart(cartData);
+        window.scrollTo(0, 0);
 
       } catch (error) {
         console.error('Error fetching data:', error);

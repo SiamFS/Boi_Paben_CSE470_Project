@@ -19,6 +19,7 @@ const AddToPayment = () => {
   });
   const [addressError, setAddressError] = useState('');
   const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [checkoutWarning, setCheckoutWarning] = useState(''); // Warning for sold items or empty cart
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -26,6 +27,7 @@ const AddToPayment = () => {
     if (user) {
       fetchCartItems();
     }
+    window.scrollTo(0, 0);
   }, [user]);
 
   const fetchCartItems = () => {
@@ -55,6 +57,20 @@ const AddToPayment = () => {
   const totalPrice = cartItems.reduce((acc, item) => acc + parseFloat(item.Price), 0);
 
   const handleCheckout = () => {
+    // Check if cart is empty
+    if (cartItems.length === 0) {
+      setCheckoutWarning('Your cart is empty. Please add items to proceed.');
+      return;
+    }
+
+    // Check if any item is sold
+    const soldItem = cartItems.find(item => item.availability === 'sold');
+    if (soldItem) {
+      setCheckoutWarning('Some items in your cart are sold out. Please remove them to proceed.');
+      return;
+    }
+
+    setCheckoutWarning(''); // Clear warning if no issues
     setIsModalOpen(true);
   };
 
@@ -66,42 +82,32 @@ const AddToPayment = () => {
   const handleStripePayment = async () => {
     const stripe = await stripePromise;
 
-    const response = await fetch('http://localhost:5000/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        items: cartItems,
-        email: user.email,
-        payment: "card"
-      }),
-    });
+    try {
+      const response = await fetch('http://localhost:5000/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: cartItems,
+          email: user.email,
+        }),
+      });
 
-    const session = await response.json();
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
 
-    if (response.ok) {
+      const session = await response.json();
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
       });
 
       if (result.error) {
-        console.error(result.error.message);
-      } else {
-        // Remove items from cart after successful payment
-        await fetch('http://localhost:5000/remove-from-cart', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: user.email,
-            items: cartItems
-          }),
-        });
+        throw new Error(result.error.message);
       }
-    } else {
-      console.error('Failed to create checkout session:', session.message);
+    } catch (error) {
+      console.error('Error in Stripe payment:', error);
     }
   };
 
@@ -151,6 +157,7 @@ const AddToPayment = () => {
     });
   };
 
+
   return (
     <div className='pt-28 px-4 lg:px-24'>
       <div className='flex flex-col lg:flex-row'>
@@ -171,7 +178,8 @@ const AddToPayment = () => {
                       <p className='text-sm font-medium text-gray-700'>
                         Author: {item.authorName} <br />
                         Category: {item.category} <br />
-                        Price: {item.Price} BDT
+                        Price: {item.Price} BDT <br />
+                        Availability: {item.availability}
                       </p>
                     </div>
                     <button
@@ -193,13 +201,17 @@ const AddToPayment = () => {
           <p className='text-xl mb-10'>Total: {(totalPrice + 50).toFixed(2)} BDT</p>
           <button
             onClick={handleCheckout}
-            className='bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors'
+            className='bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors'
           >
             Proceed to Checkout
           </button>
+          {checkoutWarning && (
+            <p className='mt-2 text-red-600'>{checkoutWarning}</p> // Show warning
+          )}
           <p className='mt-2 text-sm text-gray-600'>Shipping available within Bangladesh only</p>
         </div>
       </div>
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-8 rounded-lg max-w-md w-full">
@@ -207,13 +219,13 @@ const AddToPayment = () => {
             <div className="flex justify-around mb-4">
               <button
                 onClick={() => handlePaymentMethodSelect('card')}
-                className={`px-4 py-2 rounded-lg ${paymentMethod === 'card' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                className={`px-4 py-2 rounded-lg ${paymentMethod === 'card' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
               >
                 Pay with Card
               </button>
               <button
                 onClick={() => handlePaymentMethodSelect('cash')}
-                className={`px-4 py-2 rounded-lg ${paymentMethod === 'cash' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                className={`px-4 py-2 rounded-lg ${paymentMethod === 'cash' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}
               >
                 Cash on Delivery
               </button>
@@ -260,31 +272,35 @@ const AddToPayment = () => {
                   onChange={handleAddressChange}
                   className="border p-2 rounded-lg w-full mb-2"
                 />
-                {addressError && <p className="text-red-500 mb-2">{addressError}</p>}
+                {addressError && <p className="text-red-600">{addressError}</p>}
+              </div>
+            )}
+            <div className="mt-6 flex justify-end">
+              {paymentMethod === 'card' ? (
+                <button
+                  onClick={handleStripePayment}
+                  className="bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-500 transition-colors"
+                >
+                  Pay with Card
+                </button>
+              ) : paymentMethod === 'cash' ? (
                 <button
                   onClick={handleCashOnDelivery}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 w-full"
+                  className="bg-orange-400 text-white px-4 py-2 rounded-lg hover:bg-orange-500 transition-colors"
                 >
                   Confirm Order
                 </button>
-              </div>
-            )}
-            {paymentMethod === 'card' && (
-              <button
-                onClick={handleStripePayment}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 w-full"
-              >
-                Proceed to Payment
-              </button>
-            )}
+              ) : null}
+            </div>
           </div>
         </div>
       )}
+
       {orderConfirmed && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-8 rounded-lg">
+          <div className="bg-white p-8 rounded-lg max-w-md w-full text-center">
             <h2 className="text-2xl font-bold mb-4">Order Confirmed!</h2>
-            <p>Your order has been placed successfully.</p>
+            <p className="text-lg">Your order has been successfully placed.</p>
           </div>
         </div>
       )}

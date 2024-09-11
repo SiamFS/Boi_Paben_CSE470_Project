@@ -44,6 +44,7 @@ const Blog = () => {
 
   useEffect(() => {
     fetchPosts();
+    window.scrollTo(0, 0);
   }, []);
 
   const fetchPosts = async () => {

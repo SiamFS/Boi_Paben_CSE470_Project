@@ -19,6 +19,7 @@ import AddToPayment from "../shop/add_to_payment";
 import ForgotPassword from "../components/FogotPassword";
 import PaymentSuccess from "../components/PaymentSucess";
 
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -61,11 +62,11 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/admin/dashboard",
+    path: "/dashboard",
     element: <DashboardLayout />,
     children: [
       {
-        path: "/admin/dashboard",
+        path: "/dashboard",
         element: (
           <PrivateRoute>
             <Dashboard />
@@ -73,15 +74,15 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/admin/dashboard/upload",
+        path: "/dashboard/upload",
         element: <UploadBook />,
       },
       {
-        path: "/admin/dashboard/manage",
+        path: "/dashboard/manage",
         element: <ManageBooks />,
       },
       {
-        path: "/admin/dashboard/edit-books/:id",
+        path: "/dashboard/edit-books/:id",
         element: <EditBooks />,
         loader: ({ params }) => fetch(`http://localhost:5000/book/${params.id}`),
       },

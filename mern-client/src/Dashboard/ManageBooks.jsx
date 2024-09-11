@@ -13,7 +13,10 @@ const ManageBooks = () => {
       try {
         const response = await fetch(`http://localhost:5000/book/email/${user.email}`);
         const data = await response.json();
-        setAllBooks(data);
+
+        // Filter out books that are marked as "sold"
+        const availableBooks = data.filter(book => book.availability !== "sold");
+        setAllBooks(availableBooks);
       } catch (error) {
         console.error('Error fetching books:', error);
       }
@@ -30,7 +33,7 @@ const ManageBooks = () => {
       const data = await response.json();
       if (data.success) {
         alert(data.message);
-        window.location.reload(); // Refresh the page
+        setAllBooks((prevBooks) => prevBooks.filter(book => book._id !== id)); // Update state without reloading
       } else {
         alert(data.message);
       }
@@ -49,6 +52,7 @@ const ManageBooks = () => {
           <thead>
             <tr>
               <th className="py-2 px-4 border-b">No.</th>
+              <th className="py-2 px-4 border-b">Image</th>
               <th className="py-2 px-4 border-b">Book Name</th>
               <th className="py-2 px-4 border-b">Author Name</th>
               <th className="py-2 px-4 border-b">Category</th>
@@ -60,13 +64,14 @@ const ManageBooks = () => {
             {allBooks.map((book, index) => (
               <tr key={book._id} className="text-center">
                 <td className="py-2 px-4 border-b">{index + 1}</td>
+                <td className="p-4 border-b">{book.imageURL && <img src={book.imageURL} alt={book.bookTitle} className="h-22 w-16 object-cover mx-auto" />}</td>
                 <td className="py-2 px-4 border-b whitespace-nowrap text-ellipsis overflow-hidden max-w-[150px]">{book.bookTitle}</td>
                 <td className="py-2 px-4 border-b">{book.authorName}</td>
                 <td className="py-2 px-4 border-b">{book.category}</td>
                 <td className="py-2 px-4 border-b">{book.Price}</td>
                 <td className="py-2 px-4 border-b">
                   <Link
-                    to={`/admin/dashboard/edit-books/${book._id}`}
+                    to={`/dashboard/edit-books/${book._id}`}
                     className="font-medium text-cyan-600 hover:underline dark:text-cyan-500 mr-5">
                     Edit
                   </Link>
@@ -92,7 +97,7 @@ const ManageBooks = () => {
             <p className="font-bold mb-2">Price: <span className="font-normal">{book.Price}</span></p>
             <div className="flex justify-between mt-2">
               <Link
-                to={`/admin/dashboard/edit-books/${book._id}`}
+                to={`/dashboard/edit-books/${book._id}`}
                 className="font-medium text-cyan-600 hover:underline dark:text-cyan-500">
                 Edit
               </Link>

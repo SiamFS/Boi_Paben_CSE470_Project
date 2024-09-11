@@ -11,6 +11,7 @@ const BookCard = ({ headline, books }) => {
   const [hoveredBook, setHoveredBook] = useState(null);
   const { user } = useContext(AuthContext);
   const [userCart, setUserCart] = useState([]);
+  const [availableBooks, setAvailableBooks] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -19,7 +20,11 @@ const BookCard = ({ headline, books }) => {
         .then((data) => setUserCart(data))
         .catch((error) => console.error('Error fetching cart data:', error));
     }
-  }, [user]);
+    
+    // Filter out sold books
+    const filteredBooks = books.filter(book => book.availability !== "sold");
+    setAvailableBooks(filteredBooks);
+  }, [user, books]);
 
   const addToCart = (e, book) => {
     e.preventDefault();
@@ -86,7 +91,7 @@ const BookCard = ({ headline, books }) => {
           modules={[Pagination]}
           className="mySwiper"
         >
-          {books.map(book => (
+          {availableBooks.map(book => (
             <SwiperSlide key={book._id}>
               <div 
                 className='relative'

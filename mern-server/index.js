@@ -32,44 +32,18 @@ async function run() {
 
     
     // Add this new endpoint for cash on delivery
-    app.post('/cash-on-delivery', async (req, res) => {
-      const { items, email, address, totalAmount } = req.body;
+    const stripe = require('stripe')('sk_test_51PiZwnGRR4keZPjY1AvOeX0MO8nurmyOYSuhf77UlCSGc0hxgBEHKeP1f57QaZamaMwDGjJhaMnoW2zGYDGdwV1l00TwOuTvnv');
+    const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
     
-      try {
-        // Save payment information
-        const paymentInfo = {
-          email: email,
-          amount: totalAmount,
-          items: items.map(item => ({
-            bookId: item._id,
-            bookTitle: item.bookTitle,
-          })),
-          address: address,
-          paymentDate: new Date(),
-          paymentMethod: 'cash on delivery',
-        };
-        const result = await paymentCollection.insertOne(paymentInfo);
-    
-        // Update book availability and remove from cart
-        for (const item of items) {
-          await bookCollection.updateOne(
-            { _id: new ObjectId(item._id) },
-            { $set: { availability: 'sold' } }
-          );
-          await cartCollection.deleteOne({ original_id: item._id, user_email: email });
-        }
-    
-        res.status(200).json({ success: true, message: 'Order placed successfully' });
-      } catch (error) {
-        console.error('Error processing cash on delivery:', error);
-        res.status(500).json({ success: false, error: error.message });
-      }
-    });
-    
+    // Create checkout session for Stripe payment
     app.post('/create-checkout-session', async (req, res) => {
       const { items, email } = req.body;
     
       try {
+        // Fetch the original book IDs from cartCollection
+        const cartItems = await cartCollection.find({ user_email: email }).toArray();
+        const originalBookIds = cartItems.map(item => item.original_id);
+    
         const session = await stripe.checkout.sessions.create({
           payment_method_types: ['card'],
           line_items: items.map(item => ({
@@ -87,10 +61,7 @@ async function run() {
           success_url: `${BASE_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${BASE_URL}/add_to_payment`,
           metadata: {
-            cartItems: JSON.stringify(items.map(item => ({
-              bookId: item._id,
-              bookTitle: item.bookTitle,
-            }))),
+            originalBookIds: JSON.stringify(originalBookIds),
             customerEmail: email,
           },
           shipping_address_collection: {
@@ -119,52 +90,99 @@ async function run() {
             },
           ],
         });
-
+    
         res.json({ id: session.id });
+    
       } catch (error) {
         console.error('Error creating checkout session:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ success: false, error: error.message });
       }
     });
-
-    // New endpoint to handle successful payments
-    app.post('/handle-successful-payment', async (req, res) => {
+    
+    app.post('/payment-success', async (req, res) => {
       const { session_id } = req.body;
-      
+    
       try {
+        // Retrieve session to verify payment status
         const session = await stripe.checkout.sessions.retrieve(session_id);
-        
+    
         if (session.payment_status === 'paid') {
-          const { cartItems, customerEmail } = session.metadata;
-          const parsedCartItems = JSON.parse(cartItems);
-
+          // Extract metadata for originalBookIds and email
+          const originalBookIds = JSON.parse(session.metadata.originalBookIds);
+          const customerEmail = session.metadata.customerEmail;
+    
+          // Update book availability and remove from cart
+          for (const bookId of originalBookIds) {
+            const updateResult = await bookCollection.updateOne(
+              { _id: new ObjectId(bookId) },
+              { $set: { availability: 'sold' } }
+            );
+            console.log(`Updated book ${bookId}: ${updateResult.modifiedCount} document(s) modified`);
+    
+            const deleteResult = await cartCollection.deleteOne({ original_id: bookId, user_email: customerEmail });
+            console.log(`Removed from cart: ${deleteResult.deletedCount} document(s) deleted`);
+          }
+    
           // Save payment information
           const paymentInfo = {
             email: customerEmail,
-            amount: session.amount_total / 100,
-            items: parsedCartItems,
-            address: session.shipping?.address || {},
+            
+            amount: session.amount_total / 100, // convert amount from cents
+            items: originalBookIds.map((id, index) => ({
+              bookId: id,
+              bookTitle: session.display_items[index].custom.name,
+            })),
             paymentDate: new Date(),
             paymentMethod: 'card',
-            stripeSessionId: session.id
           };
+    
           await paymentCollection.insertOne(paymentInfo);
-
-          // Update book availability and remove from cart
-          for (const item of parsedCartItems) {
-            await bookCollection.updateOne(
-              { _id: new ObjectId(item.bookId) },
-              { $set: { availability: 'sold' } }
-            );
-            await cartCollection.deleteOne({ original_id: item.bookId, user_email: customerEmail });
-          }
-
-          res.status(200).json({ success: true, message: 'Payment processed and cart updated successfully' });
+    
+          res.status(200).json({ success: true, message: 'Payment processed successfully, cart updated' });
         } else {
           res.status(400).json({ success: false, message: 'Payment not completed' });
         }
       } catch (error) {
-        console.error('Error handling successful payment:', error);
+        console.error('Error confirming payment success:', error);
+        res.status(500).json({ success: false, error: error.message });
+      }
+    });
+    
+  
+    // Cash on Delivery endpoint
+    app.post('/cash-on-delivery', async (req, res) => {
+      const { items, email, address, totalAmount } = req.body;
+    
+      try {
+        // Save payment information
+        const paymentInfo = {
+          email: email,
+          amount: totalAmount,
+          items: items.map(item => ({
+            bookId: item._id,
+            bookTitle: item.bookTitle,
+          })),
+          address: address,
+          paymentDate: new Date(),
+          paymentMethod: 'cash on delivery',
+        };
+        const result = await paymentCollection.insertOne(paymentInfo);
+    
+        // Update book availability and remove from cart
+        for (const item of items) {
+          const updateResult = await bookCollection.updateOne(
+            { _id: new ObjectId(item._id) },
+            { $set: { availability: 'sold' } }
+          );
+          console.log(`Updated book ${item._id}: ${updateResult.modifiedCount} document(s) modified`);
+          
+          const deleteResult = await cartCollection.deleteOne({ original_id: item._id, user_email: email });
+          console.log(`Removed from cart: ${deleteResult.deletedCount} document(s) deleted`);
+        }
+    
+        res.status(200).json({ success: true, message: 'Order placed successfully' });
+      } catch (error) {
+        console.error('Error processing cash on delivery:', error);
         res.status(500).json({ success: false, error: error.message });
       }
     });

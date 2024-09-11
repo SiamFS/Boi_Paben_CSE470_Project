@@ -16,7 +16,9 @@ const SearchBox = () => {
       try {
         const response = await fetch(`http://localhost:5000/search/${title}`);
         const data = await response.json();
-        setBooks(data);
+        // Filter out sold books
+        const availableBooks = data.filter(book => book.availability !== "sold");
+        setBooks(availableBooks);
       } catch (error) {
         setError(error.message);
       } finally {
@@ -100,7 +102,7 @@ const SearchBox = () => {
             No search results found for "{title}"
           </div>
         ) : (
-          <div className='grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'>
+          <div className='grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6'>
             {books.map((book) => (
               <div key={book._id} className='bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105'>
                 <div className='relative aspect-w-3 aspect-h-4 overflow-hidden'>
@@ -123,7 +125,7 @@ const SearchBox = () => {
                   </div>
                 </div>
                 <div className='p-4'>
-                  <h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle}</h3>
+                  <h3 className='text-xl font-semibold text-gray-800 mb-2'>{<h3 className='text-xl font-semibold text-gray-800 mb-2'>{book.bookTitle.length > 40 ? book.bookTitle.substring(0, 40) + '...' : book.bookTitle}</h3>}</h3>
                   <p className='text-sm text-gray-600 mb-1'>Author: {book.authorName}</p>
                   <p className='text-sm text-gray-600 mb-2'>Category: {book.category}</p>
                   <p className='text-lg font-bold text-blue-600 mb-4'>{book.Price} TK</p>
