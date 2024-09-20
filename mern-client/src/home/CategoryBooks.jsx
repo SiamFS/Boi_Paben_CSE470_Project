@@ -15,7 +15,7 @@ const CategoryBooks = () => {
   useEffect(() => {
     fetch(`http://localhost:5000/books/category/${selectedCategory}`)
       .then(res => res.json())
-      .then(data => setBooks(data.slice(0, 8)))
+      .then(data => setBooks(data.slice(0, 90)))
       .catch(error => console.error('Error fetching books:', error));
   }, [selectedCategory]);
 

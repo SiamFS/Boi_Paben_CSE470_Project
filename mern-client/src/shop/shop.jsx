@@ -15,11 +15,7 @@ const Shop = () => {
       try {
         // Fetch books
         let url = 'http://localhost:5000/allbooks';
-        if (sortOrder && category) {
-          url = `http://localhost:5000/books/category/${category}?order=${sortOrder}`;
-        } else if (sortOrder) {
-          url = `http://localhost:5000/books/sort/price?order=${sortOrder}`;
-        } else if (category) {
+        if (category) {
           url = `http://localhost:5000/books/category/${category}`;
         }
         const booksResponse = await fetch(url);
@@ -33,11 +29,21 @@ const Shop = () => {
         }
 
         // Filter out sold books and update books with cart status
-        const availableBooks = booksData.filter(book => book.availability !== "sold");
-        setBooks(availableBooks.map(book => ({
+        let availableBooks = booksData.filter(book => book.availability !== "sold");
+        availableBooks = availableBooks.map(book => ({
           ...book,
           inCart: cartData.some(cartItem => cartItem._id === book._id),
-        })));
+          Price: parseFloat(book.Price) // Ensure Price is a number
+        }));
+
+        // Sort books based on sortOrder
+        if (sortOrder === 'asc') {
+          availableBooks.sort((a, b) => a.Price - b.Price);
+        } else if (sortOrder === 'desc') {
+          availableBooks.sort((a, b) => b.Price - a.Price);
+        }
+
+        setBooks(availableBooks);
         setUserCart(cartData);
         window.scrollTo(0, 0);
 

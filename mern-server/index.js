@@ -401,12 +401,32 @@ async function run() {
     });
 
     app.get("/allbooks/", async (req, res) => {
-      let query = {};
-      if (req.query?.category) {
-        query = { category: req.query.category };
+      try {
+        let query = {};
+        if (req.query?.category) {
+          query = { category: req.query.category };
+        }
+    
+        let sortOptions = {};
+        if (req.query?.sort) {
+          sortOptions[req.query.sort] = req.query.order === 'desc' ? -1 : 1;
+        } else {
+          // Default sort by createdAt in descending order
+          sortOptions = { createdAt: -1 };
+        }
+    
+        const limit = parseInt(req.query?.limit) || 0;
+    
+        const result = await bookCollection.find(query)
+          .sort(sortOptions)
+          .limit(limit)
+          .toArray();
+    
+        res.send(result);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+        res.status(500).send({ error: 'An error occurred while fetching books' });
       }
-      const result = await bookCollection.find(query).toArray();
-      res.send(result);
     });
 
     app.get("/search/:title", async (req, res) => {

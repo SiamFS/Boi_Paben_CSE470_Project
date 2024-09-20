@@ -1,23 +1,45 @@
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom';
-import BookCards from '../components/BookCards'
+import React, { useEffect, useState } from 'react';
+import BookCards from '../components/BookCards';
 
 const FavoriteBooks = () => {
     const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        fetch("http://localhost:5000/allbooks")
-            .then(res => res.json())
-            .then(data => setBooks(data.slice(0, 8)))
-            .catch(error => console.error('Error fetching books:', error));
-    }, [])
+        setLoading(true);
+        fetch("http://localhost:5000/allbooks?sort=createdAt&order=desc&limit=20")
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return res.json();
+            })
+            .then(data => {
+                // Reverse the order of books to display newest first
+                setBooks(data.reverse());
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error('Error fetching books:', error);
+                setError('Failed to load books. Please try again later.');
+                setLoading(false);
+            });
+    }, []);
+
+    if (loading) return <div className="text-center my-8">Loading...</div>;
+    if (error) return <div className="text-center my-8 text-red-500">{error}</div>;
 
     return (
         <div className="my-16 px-4 lg:px-24">
             <h2 className="text-3xl font-bold text-center mb-8">Latest Books</h2>
-            <BookCards books={books} />
+            {books.length > 0 ? (
+                <BookCards books={books} />
+            ) : (
+                <p className="text-center">No books available at the moment.</p>
+            )}
         </div>
-    )
-}
+    );
+};
 
-export default FavoriteBooks
+export default FavoriteBooks;
