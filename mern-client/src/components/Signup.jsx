@@ -4,7 +4,7 @@ import { AuthContext } from '../contexts/AuthProvider';
 import { FaBookOpen } from 'react-icons/fa';
 
 const Signup = () => {
-  const { createUser, signInWithGoogle } = useContext(AuthContext);
+  const { createUser, signInWithGoogle, checkEmailExists } = useContext(AuthContext);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -20,6 +20,14 @@ const Signup = () => {
     const lastName = form.lastName.value;
 
     try {
+      // Check if email already exists
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        setError("An account with this email already exists. Please use a different email or log in.");
+        setTimeout(() => setError(""), 5000);
+        return;
+      }
+
       const result = await createUser(email, password, firstName, lastName);
       setSuccess(result.message);
       setTimeout(() => {

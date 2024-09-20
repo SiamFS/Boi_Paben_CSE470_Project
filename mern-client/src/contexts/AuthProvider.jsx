@@ -9,7 +9,8 @@ import {
   GoogleAuthProvider, 
   sendPasswordResetEmail, 
   sendEmailVerification,
-  updateProfile
+  updateProfile,
+  fetchSignInMethodsForEmail
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
@@ -75,10 +76,10 @@ const AuthProvider = ({ children }) => {
       if (!userCredential.user.emailVerified) {
         await signOut(auth);
         setLoading(false);
-        throw new Error("Please verify your email before logging in.");
+        return { message: "Please verify your email before logging in." };
       }
       setLoading(false);
-      return userCredential.user;
+      return { user: userCredential.user };
     } catch (error) {
       setLoading(false);
       throw error;
@@ -149,6 +150,16 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const checkEmailExists = async (email) => {
+    try {
+      const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+      return signInMethods.length > 0;
+    } catch (error) {
+      console.error("Error checking email existence:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -178,6 +189,7 @@ const AuthProvider = ({ children }) => {
     signInWithGoogle,
     resetPassword,
     updateUserProfile,
+    checkEmailExists,
   };
 
   return (

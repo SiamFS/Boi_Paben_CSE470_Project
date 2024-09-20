@@ -20,11 +20,17 @@ const Login = () => {
     const password = form.password.value;
 
     try {
-      await login(email, password);
-      setTimeout(() => {
-        setSuccess("");
-        navigate(from, { replace: true });
-      }, 1500);
+      const result = await login(email, password);
+      if (result.user) {
+        setSuccess("Login successful!");
+        setTimeout(() => {
+          setSuccess("");
+          navigate(from, { replace: true });
+        }, 1500);
+      } else if (result.message) {
+        setError(result.message);
+        setTimeout(() => setError(""), 3000);
+      }
     } catch (error) {
       setError(error.message);
       setTimeout(() => setError(""), 3000);
@@ -34,6 +40,7 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
+      setSuccess("Login successful!");
       setTimeout(() => {
         setSuccess("");
         navigate(from, { replace: true });
