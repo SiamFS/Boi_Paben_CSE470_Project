@@ -7,24 +7,33 @@ const FavoriteBooks = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        setLoading(true);
-        fetch("http://localhost:5000/allbooks?sort=createdAt&order=desc&limit=20")
-            .then(res => {
-                if (!res.ok) {
+        const fetchBooks = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch("http://localhost:5000/allbooks");
+                if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                return res.json();
-            })
-            .then(data => {
-                // Reverse the order of books to display newest first
-                setBooks(data.reverse());
-                setLoading(false);
-            })
-            .catch(error => {
+                const data = await response.json();
+                
+                // Sort books by createdAt in descending order (newest first)
+                const sortedBooks = data.sort((a, b) => 
+                    new Date(b.createdAt) - new Date(a.createdAt)
+                );
+                
+                // Take only the first 20 books and reverse their order
+                const reversedBooks = sortedBooks.slice(0, 20).reverse();
+                
+                setBooks(reversedBooks);
+            } catch (error) {
                 console.error('Error fetching books:', error);
                 setError('Failed to load books. Please try again later.');
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchBooks();
     }, []);
 
     if (loading) return <div className="text-center my-8">Loading...</div>;
