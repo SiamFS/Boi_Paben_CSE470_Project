@@ -1,2 +1,11 @@
+# _config.yml
+
 exclude:
-  - "node_modules"
+  - node_modules
+  - mern-server/node_modules
+  - mern-client/node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - .gitignore
