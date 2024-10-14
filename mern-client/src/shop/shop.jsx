@@ -14,9 +14,9 @@ const Shop = () => {
     const fetchData = async () => {
       try {
         // Fetch books
-        let url = 'http://localhost:5000/allbooks';
+        let url = 'https://boi-paben-backend.onrender.com/allbooks';
         if (category) {
-          url = `http://localhost:5000/books/category/${category}`;
+          url = `https://boi-paben-backend.onrender.com/books/category/${category}`;
         }
         const booksResponse = await fetch(url);
         const booksData = await booksResponse.json();
@@ -24,7 +24,7 @@ const Shop = () => {
         // Fetch user cart if logged in
         let cartData = [];
         if (user) {
-          const cartResponse = await fetch(`http://localhost:5000/cart/${user.email}`);
+          const cartResponse = await fetch(`https://boi-paben-backend.onrender.com/cart/${user.email}`);
           cartData = await cartResponse.json();
         }
 
@@ -67,7 +67,7 @@ const Shop = () => {
         user_email: user.email,
       };
 
-      fetch('http://localhost:5000/cart', {
+      fetch('https://boi-paben-backend.onrender.com/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

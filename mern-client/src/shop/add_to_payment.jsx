@@ -31,14 +31,14 @@ const AddToPayment = () => {
   }, [user]);
 
   const fetchCartItems = () => {
-    fetch(`http://localhost:5000/cart/${user.email}`)
+    fetch(`https://boi-paben-backend.onrender.com/cart/${user.email}`)
       .then((res) => res.json())
       .then((data) => setCartItems(data))
       .catch((error) => console.error('Error fetching cart items:', error));
   };
 
   const handleRemoveItem = (id) => {
-    fetch(`http://localhost:5000/cart/${id}`, {
+    fetch(`https://boi-paben-backend.onrender.com/cart/${id}`, {
       method: 'DELETE',
     })
       .then((res) => res.json())
@@ -83,7 +83,7 @@ const AddToPayment = () => {
     const stripe = await stripePromise;
 
     try {
-      const response = await fetch('http://localhost:5000/create-checkout-session', {
+      const response = await fetch('https://boi-paben-backend.onrender.com/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ const AddToPayment = () => {
     }
     setAddressError('');
 
-    const response = await fetch('http://localhost:5000/cash-on-delivery', {
+    const response = await fetch('https://boi-paben-backend.onrender.com/cash-on-delivery', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

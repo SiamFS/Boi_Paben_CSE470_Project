@@ -10,7 +10,7 @@ const FavoriteBooks = () => {
         const fetchBooks = async () => {
             try {
                 setLoading(true);
-                const response = await fetch("http://localhost:5000/allbooks");
+                const response = await fetch("https://boi-paben-backend.onrender.com/allbooks");
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

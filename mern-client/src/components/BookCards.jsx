@@ -15,7 +15,7 @@ const BookCard = ({ headline, books }) => {
 
   useEffect(() => {
     if (user) {
-      fetch(`http://localhost:5000/cart/${user.email}`)
+      fetch(`https://boi-paben-backend.onrender.com/cart/${user.email}`)
         .then((res) => res.json())
         .then((data) => setUserCart(data))
         .catch((error) => console.error('Error fetching cart data:', error));
@@ -40,7 +40,7 @@ const BookCard = ({ headline, books }) => {
         user_email: user.email,
       };
 
-      fetch('http://localhost:5000/cart', {
+      fetch('https://boi-paben-backend.onrender.com/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

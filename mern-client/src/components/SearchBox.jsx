@@ -14,7 +14,7 @@ const SearchBox = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/search/${title}`);
+        const response = await fetch(`https://boi-paben-backend.onrender.com/search/${title}`);
         const data = await response.json();
         // Filter out sold books
         const availableBooks = data.filter(book => book.availability !== "sold");
@@ -38,7 +38,7 @@ const SearchBox = () => {
   }, [user]);
 
   const fetchUserCart = () => {
-    fetch(`http://localhost:5000/cart/${user.email}`)
+    fetch(`https://boi-paben-backend.onrender.com/cart/${user.email}`)
       .then((res) => res.json())
       .then((data) => {
         setUserCart(data);
@@ -63,7 +63,7 @@ const SearchBox = () => {
 
       delete cartItem._id;
 
-      fetch('http://localhost:5000/cart', {
+      fetch('https://boi-paben-backend.onrender.com/cart', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

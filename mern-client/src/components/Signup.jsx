@@ -89,7 +89,7 @@ const Signup = () => {
                 <h1 className="font-bold text-black mb-4">Sign up with Google</h1>
                 <button onClick={handleGoogleSignup} className="text-white rounded-md">
                   <img 
-                    src="/src/assets/google-logo.svg" 
+                    src="https://img.icons8.com/color/48/000000/google-logo.png"
                     alt="Sign up with Google" 
                     style={{ width: '40px', height: '40px' }}
                   />

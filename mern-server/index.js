@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
+require('dotenv').config();
+
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -9,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 // MongoDB configuration
-const uri = "mongodb+srv://boi-paben:ky76U2dPmqMEIafT@cluster0.1sfia34.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -18,17 +20,18 @@ const client = new MongoClient(uri, {
   }
 });
 
-const stripe = require('stripe')('sk_test_51PiZwnGRR4keZPjY1AvOeX0MO8nurmyOYSuhf77UlCSGc0hxgBEHKeP1f57QaZamaMwDGjJhaMnoW2zGYDGdwV1l00TwOuTvnv');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
+
 // Main function to run the server
 async function run() {
   try {
     await client.connect();
-    const bookCollection = client.db("bookinventory").collection("books");
-    const blogCollection = client.db("bookinventory").collection("blogs");
-    const cartCollection = client.db("bookinventory").collection("cart");
-    const paymentCollection = client.db("bookinventory").collection("payments");
-    const reportCollection = client.db("bookinventory").collection("reports");
+    const bookCollection = client.db(process.env.DB_NAME).collection("books");
+    const blogCollection = client.db(process.env.DB_NAME).collection("blogs");
+    const cartCollection = client.db(process.env.DB_NAME).collection("cart");
+    const paymentCollection = client.db(process.env.DB_NAME).collection("payments");
+    const reportCollection = client.db(process.env.DB_NAME).collection("reports");
 
     
     // Add this new endpoint for cash on delivery
